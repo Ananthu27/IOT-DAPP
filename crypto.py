@@ -48,3 +48,24 @@ def signRSA(private_key,message):
             hashes.SHA256()
             )
     return signed_message
+
+from cryptography.exceptions import InvalidSignature
+
+############ FUNCTION TO VERIFY A MESSAGE SIGNED WITH RSA PRIVATE KEY
+def verifySignRSA(public_key,signed_message,message):
+    result = None
+    try:
+        public_key.verify(
+            signed_message,
+            message,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+        result = True
+    except InvalidSignature:
+        result = False
+    finally :
+        return result
