@@ -69,3 +69,33 @@ def verifySignRSA(public_key,signed_message,message):
         result = False
     finally :
         return result
+
+def encryptRSA(public_key,message):
+    ciphertext = None
+    if type(message) == type(b''):
+        ciphertext = public_key.encrypt(
+            message,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+    return ciphertext
+
+def decryptRSA(private_key,ciphertext):
+    plaintext = None
+    try :
+        plaintext = private_key.decrypt(
+            ciphertext,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+    except Exception as e:
+        ########### Log here
+        pass
+    finally:
+        return plaintext
