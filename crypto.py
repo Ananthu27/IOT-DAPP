@@ -31,3 +31,20 @@ def loadKeyPairRSA(private_key_serialized,publick_key_serialized,master_key):
     private_key = load_pem_private_key(private_key_serialized,master_key.encode())
     public_key = load_pem_public_key(publick_key_serialized)
     return private_key, public_key
+
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+
+############# FUNCTION TO SIGN MESSAGE WITH RSA PRIVATE KEY
+def signRSA(private_key,message):
+    signed_message = None
+    if type(message) == type(b''):
+        signed_message = private_key.sign(
+            message,
+            padding.PSS(
+                mgf = padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+            )
+    return signed_message
