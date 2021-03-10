@@ -70,6 +70,7 @@ def verifySignRSA(public_key,signed_message,message):
     finally :
         return result
 
+########## FUNCTION TO ENCRYPT MESSAGE USING RSA PUBLIC KEY
 def encryptRSA(public_key,message):
     ciphertext = None
     if type(message) == type(b''):
@@ -83,6 +84,7 @@ def encryptRSA(public_key,message):
         )
     return ciphertext
 
+########## FUNCTION TO DECRYPT MESSAGE ENCRYPTED WITH encryptRSA() USING CORRESPONDING PRIVATE KEY
 def decryptRSA(private_key,ciphertext):
     plaintext = None
     try :
