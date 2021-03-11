@@ -14,41 +14,39 @@ def getPorts():
 
 port_list = getPorts()
 
-
 import socket 
-import threading
-# import time
 import traceback
+from crypto import getKeyPairRSA,loadKeyPairRSA
+import time
 
 host = '127.0.0.1'
 
 message = {
     '1' : 'PUBLIC KEY REQUEST'
 }
+
 import random
 def deployServer(HOST,PORT):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        pk = random.random()
-        pk = str(pk).encode()
+        master_key = 'testing'
+        private_key_serialized, public_key_serialized = getKeyPairRSA(serialize=True,master_key=master_key)
         try :
-            print ('establishing server at addr :',HOST,':',PORT)
+            print ('Establishing server at addr :',HOST,':',PORT)
             s.bind((HOST, PORT))
-            while True:
-                message , address = s.recvfrom(1024)
-                print ('recevied :',message,address)
-                if message.decode() == '1':
-                    s.sendto(pk,address)
-                    # del message, address
-            # s.listen()
-            # conn, addr = s.accept()
-            # print('Connected by', addr)
-            # with conn:
-            #     while True:
-            #         data = conn.recv(1024)
-            #         if data.decode() == '1' :
-            #             conn.sendall(str(pk).encode())
-            #         conn, addr = s.accept()
-            #         print('Connected by', addr)
+            if PORT==1111:
+                while True:
+                    message , address = s.recvfrom(1024)
+                    print ('recevied :',message,address)
+                    ########### ANSWER DIFFERNET MESSAGES HERE
+                    if message.decode() == '1':
+                        s.sendto(public_key_serialized,address)
+            else:
+                while True:
+                    s.sendto('1'.encode(),('127.0.0.1',1111))
+                    message , addr = s.recvfrom(1024)
+                    discard, master_public_key = loadKeyPairRSA(message,master_key)
+                    print ('public key:',master_public_key)
+                    time.sleep(10)
                         
         except OSError:
             print ('Port :',PORT,'taken')
@@ -57,40 +55,10 @@ def deployServer(HOST,PORT):
         finally:
             s.close()
 
-
-def echoClient(HOST,R_PORT):
-    try :
-        if R_PORT in getPorts():
-            print ('sending .... ')
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-                # print ('initialising client at',HOST,':',S_PORT)
-                # s.bind((HOST,S_PORT))
-                # s.listen()
-                # s.connect((HOST, R_PORT))
-                # s.sendall(b'1')
-                # data = s.recv(1024)
-                # print (data.decode())
-                s.sendto('1'.encode(),('127.0.0.1',1111))
-                print ('here')
-                message , addr = s.recvfrom(1024)
-                print (message)
-        else :
-            print ('did not find',R_PORT)
-
-    except OSError:
-        print ('Port : taken')
-        # echoClient(HOST,S_PORT+2,R_PORT)
-    except :
-        traceback.print_exc()
-    finally:
-        # s.close()
-        pass
-
 server = None
 
 if '1111' not in port_list:
-    master_port = 1111
-    server = threading.Thread(target=deployServer,args=(host,master_port),daemon=True)
+    port = 1111
     
 else :
     port = None
@@ -98,7 +66,5 @@ else :
         if str(i) not in port_list:
             port = i
             break
-    server = threading.Thread(target=echoClient,args=(host,'1111'),daemon=True)
 
-server.start()
-server.join()
+deployServer(host,port)
