@@ -27,8 +27,12 @@ def getKeyPairRSA(serialize=False,master_key=None):
 from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key
 
 ############# FUNCTION TO UNSERIALIZE RSA KEY PAIR GENERATED WITH getKeyPairRSA()
-def loadKeyPairRSA(private_key_serialized,publick_key_serialized,master_key):
-    private_key = load_pem_private_key(private_key_serialized,master_key.encode())
+def loadKeyPairRSA(publick_key_serialized,master_key,private_key_serialized=None):
+    if type(master_key) == type(''):
+        master_key = master_key.encode()
+    private_key = None
+    if private_key_serialized is not None:
+        private_key = load_pem_private_key(private_key_serialized,master_key)
     public_key = load_pem_public_key(publick_key_serialized)
     return private_key, public_key
 
@@ -38,15 +42,17 @@ from cryptography.hazmat.primitives.asymmetric import padding
 ############# FUNCTION TO SIGN MESSAGE WITH RSA PRIVATE KEY
 def signRSA(private_key,message):
     signed_message = None
-    if type(message) == type(b''):
-        signed_message = private_key.sign(
-            message,
-            padding.PSS(
-                mgf = padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH
-            ),
-            hashes.SHA256()
-            )
+    if type(message) == type(''):
+        message = message.encode()
+    ########## ADD JSON TO BYTES ALSO THAT IS DICT TO JSON TO BYTES
+    signed_message = private_key.sign(
+        message,
+        padding.PSS(
+            mgf = padding.MGF1(hashes.SHA256()),
+            salt_length=padding.PSS.MAX_LENGTH
+        ),
+        hashes.SHA256()
+        )
     return signed_message
 
 from cryptography.exceptions import InvalidSignature
@@ -73,15 +79,17 @@ def verifySignRSA(public_key,signed_message,message):
 ########## FUNCTION TO ENCRYPT MESSAGE USING RSA PUBLIC KEY
 def encryptRSA(public_key,message):
     ciphertext = None
-    if type(message) == type(b''):
-        ciphertext = public_key.encrypt(
-            message,
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-            )
+    if type(message) == type(''):
+        message = message.encode()
+    ########## ADD JSON TO BYTES ALSO THAT IS DICT TO JSON TO BYTES
+    ciphertext = public_key.encrypt(
+        message,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
         )
+    )
     return ciphertext
 
 ########## FUNCTION TO DECRYPT MESSAGE ENCRYPTED WITH encryptRSA() USING CORRESPONDING PRIVATE KEY
