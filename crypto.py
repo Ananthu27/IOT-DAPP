@@ -1,8 +1,29 @@
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
-from urllib.request import urlopen
+# from urllib.request import urlopen
+
+########## IMPORTS FOR LOGGING
+from logger import createLogger
+from logging import INFO
+from functools import wraps
+
+crypto_logger = createLogger(name='Crypto',level=INFO,state='DEVELOPMENT')
+
+########## WRAPPER FOR LOGGER
+def logExceptionsWrapper(function):
+    @wraps(function)
+    def logExceptions(*args,**kwargs):
+        try:
+            return function(*args,**kwargs)
+        except:
+            print ('################# CRYPTO ERROR ###############')
+            crypto_logger.exception('exception in crypto.py.%s'%(function.__name__))
+            print ('exception in crypto.py.%s'%(function.__name__))
+            print ('################# CRYPTO ERROR ###############')
+    return logExceptions
 
 ############ FUNCTION RETURNS PUBLIC PRIVATE KEY PAIR FOR RSA
+@logExceptionsWrapper
 def getKeyPairRSA(serialize=False,master_key=None):
     private_key = rsa.generate_private_key(
         public_exponent=65537,
@@ -27,6 +48,7 @@ def getKeyPairRSA(serialize=False,master_key=None):
 from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key
 
 ############# FUNCTION TO UNSERIALIZE RSA KEY PAIR GENERATED WITH getKeyPairRSA()
+@logExceptionsWrapper
 def loadKeyPairRSA(publick_key_serialized,master_key,private_key_serialized=None):
     if type(master_key) == type(''):
         master_key = master_key.encode()
@@ -40,6 +62,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 
 ############# FUNCTION TO SIGN MESSAGE WITH RSA PRIVATE KEY
+@logExceptionsWrapper
 def signRSA(private_key,message):
     signed_message = None
     if type(message) == type(''):
@@ -58,6 +81,7 @@ def signRSA(private_key,message):
 from cryptography.exceptions import InvalidSignature
 
 ############ FUNCTION TO VERIFY A MESSAGE SIGNED WITH RSA PRIVATE KEY
+@logExceptionsWrapper
 def verifySignRSA(public_key,signed_message,message):
     result = None
     try:
@@ -77,6 +101,7 @@ def verifySignRSA(public_key,signed_message,message):
         return result
 
 ########## FUNCTION TO ENCRYPT MESSAGE USING RSA PUBLIC KEY
+@logExceptionsWrapper
 def encryptRSA(public_key,message):
     ciphertext = None
     if type(message) == type(''):
@@ -93,6 +118,7 @@ def encryptRSA(public_key,message):
     return ciphertext
 
 ########## FUNCTION TO DECRYPT MESSAGE ENCRYPTED WITH encryptRSA() USING CORRESPONDING PRIVATE KEY
+@logExceptionsWrapper
 def decryptRSA(private_key,ciphertext):
     plaintext = None
     try :
