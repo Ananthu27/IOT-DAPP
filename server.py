@@ -1,16 +1,5 @@
 # https://www.random.org/sequences/?min=10&max=20&col=10&format=plain&rnd=new
-import subprocess
-
-########## FUNCTION TO GET LISTENING TCP AND UPD PORT NUMBERS
-def getPorts():
-    output = subprocess.run(["netstat", "-ltu"], capture_output=True)
-    connection_list = output.stdout.decode().split('\n')
-    if '' in connection_list:
-        connection_list.remove('')
-    connection_list = connection_list[2:]
-    port_list = [connection.split()[3].split(':')[-1] for connection in connection_list]
-    return port_list
-
+from network import getPorts
 
 port_list = getPorts()
 
