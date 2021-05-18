@@ -1,0 +1,105 @@
+1. entity authentication requires:
+	a. entity identification/identity
+	b. freshness / entity is alive
+
+2. for entity authentication :
+	a. setup a shared secret key during entity identifiaction ( this provides CONTINOUS entity authentication feature ) or shared zone key is fine.
+
+3. when master pings alive message to all devices , this message includes : 
+	a. all authenticaed followers publick keys df
+	b. nonce for freshness
+	c. data origin auth. wiht digital signature. (ie signed with master pub key)
+
+4. dead master claim requires :
+	a. random k*(constant time)s of wait before claim.
+
+5. new master can request public key df , reply with df verifies other followers , message includes:
+	a. nonce for freshness :
+	b. new master public key signed with zone key.
+
+6. zone key saved as hash on all devices.
+
+https://www.random.org/sequences/?min=10&max=20&col=10&format=plain&rnd=new ... for true random
+
+7. use hsm api to store zone key ... back this up on another HSM
+
+8. archive old private-public key pair ... after key lifetime. needs a detailed key archival system. with device(identifier)-env(info)-keys mapping
+
+9. master will be center of old key archive.
+
+10. block chain will store public key certificates .... coressponding transaction ids controled/stored by master.
+	follower add to group transation itself is the public key certificate.
+
+--- path of exile ---
+
+1. on setup input -
+	a. master (bool) (essential)
+	b. zone key (str) (essential)
+	c. if master exist ... master IP address. (optinal)
+	d. unique name (essential)
+then register directly to bc.
+if not master device ping group assositaion transaction id to master IP ... ping every 30s (alive message) ... master reply with aliveList
+assume master dead if last aliveList > 5min
+
+2. life loop :
+	if master :
+		while(true):
+			1 check any device in aliveList time > 5min 
+			2 check inbox,
+			3 check outbox
+	if not master :
+		while(true):
+			1 check last master reply > 5min
+			2 check last alive ping to master > 30s
+			3 check inbox,
+			4 check outbox
+
+3. master : aliveList. ... contains device IP, Port, Unique Name, public key, timestamp of Joining, auto inc count(precidence for new master), last ping time
+	update aliveList on every device ping,
+	if device last ping time > 5min : remove from aliveList
+	forward aliveList to all Device after update on device ping
+
+4. new master resolution criteria : (when last response from master > 5min)
+	lowest precidence count assumed master.
+	if device precidence count is min:
+		assume master role ... switch to master mode ... reduce all device precidence count by one and remove old master(s) (precidence count <0).
+	else :
+		reduce all device precidence count by one and remove old master(s) (precidence count <0) ... wait for 30s 
+	still not resolved repeat.
+
+5. entity authenticaion on new member added.
+	1 new member forwards assosiation transaction 
+	2 master verifies assosication transaction
+	3 master forward group creation transaction
+	4 new member verifies group creation transasction
+	hence both authenticate each other.
+
+6. when any device wants to send message
+	1 get reciver info from latest aliveList.
+	2 create message transaction.
+	3 ping master message transaction.
+	4 ping reciver with message transaction and assosication transaction.
+	5 reciver verifies association transaction and recives message from transaction.
+	6 ack with reciver association transaction.
+	7 sender verifies reciver association transaction.
+	
+7. gui for master 
+	1 can only run from master device.
+	2 must show :
+		a current aliveList
+		b all previous device archive
+		c gas cost details per transaction
+		d interface to access any transaction
+		e blockchain details (not nessasary)
+
+--- remember while making contracts ---
+
+1. maintain state as ENUM and function to checkState if state.idle == ContractState
+
+2. super global variables .... 
+	1 for transaction msg .... ex msg.sender (type : address)
+	2 for blockchaain block .... ex block.timestamp (type : int)
+
+3.	i. public functions can be called from any account
+	ii. internal functions can only be called within public functions cannot be called from external
+	iii. external functions can not be called by account that deployed the contract
