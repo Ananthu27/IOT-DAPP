@@ -2,11 +2,33 @@ from solc import compile_standard
 import json
 from web3._utils.empty import Empty
 
-########## custom exceptions ... move to common exceptions.py file soon
+########## IMPORTS FOR LOGGING
+from logger import createLogger
+from logging import INFO
+from functools import wraps
+
+blockchain_logger = createLogger(name='BlockChain', level=INFO, state='DEVELOPMENT')
+
+########## WRAPPER FOR LOGGER
+
+
+def logExceptionsWrapper(function):
+    @wraps(function)
+    def logExceptions(*args, **kwargs):
+        try:
+            return function(*args, **kwargs)
+        except:
+            print('################# BLOCKCHAIN ERROR ###############')
+            blockchain_logger.exception(
+                'exception in crypto.py.%s' % (function.__name__))
+            print('exception in crypto.py.%s' % (function.__name__))
+            print('################# BLOCKCHAIN ERROR ###############')
+    return logExceptions
 
 from exceptions import NoneValuedPars, EmptyDefaultAccount, FileExtError
 
 ########## FUNCTION TO COMPILE SOLIDITY CODE AND RETURN THE ABI AND BYTECODE ... PROVIDE ABSOLUTE PATH AS PARAMETER
+@logExceptionsWrapper
 def getAbiAndBytecode(file_path=None):
     if file_path is not None:
         if file_path.endswith('.sol'):
@@ -50,6 +72,7 @@ def getAbiAndBytecode(file_path=None):
         raise NoneValuedPars(varname='file_path',function=__file__+'.getAbiAndBytecode()')
 
 ########## FUNCTION TO DEPLOY CONTRACT TO BLOCKCHAIN
+@logExceptionsWrapper
 def deploy(file_path=None,bc_conn=None):
     ########## assumption : default account is set on the bc_conn
     if bc_conn is not None: 
