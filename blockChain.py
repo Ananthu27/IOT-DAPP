@@ -93,14 +93,9 @@ def deploy(file_path=None,bc_conn=None):
 
 # from web3 import Web3
 
-# config = None
-
-# with open('config.json') as f:
-#     config = json.load(f)
-
-# ganache_url = config['ganache_endpoint']
+# ganache_url = 'http://127.0.0.1:7545'
 
 # web3 = Web3(Web3.HTTPProvider(ganache_url))
 # web3.eth.default_account = web3.eth.accounts[0]
 
-# receipt = deploy('/ANNA/PROJECT/IOT-DAPP/Contracts/Storage.sol',web3)
+# receipt = deploy('Contracts/Storage.sol',web3)
