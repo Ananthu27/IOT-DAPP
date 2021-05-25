@@ -1,0 +1,5 @@
+python web3
+python py-solc
+python cryptography
+ganache 
+solidity compiler
