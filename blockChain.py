@@ -10,8 +10,6 @@ from functools import wraps
 blockchain_logger = createLogger(name='BlockChain', level=INFO, state='DEVELOPMENT')
 
 ########## WRAPPER FOR LOGGER
-
-
 def logExceptionsWrapper(function):
     @wraps(function)
     def logExceptions(*args, **kwargs):
