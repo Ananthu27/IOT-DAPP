@@ -7,6 +7,7 @@ contract Storage {
     bool internal busy = false;
 
     struct device_info {
+        bool exist;
         string device_name;
         string public_key;
         string public_address;
@@ -15,6 +16,7 @@ contract Storage {
     struct group_info {
         bool exist;
         device_info master_device;
+        uint256 max_size;
         string[] followers;
     }
 
@@ -43,6 +45,7 @@ contract Storage {
         if(!groupExists(secret_key)){
 
             device_info memory master;
+            master.exist = true;
             master.device_name = master_name;
             master.public_key = master_public_key;
             master.public_address = master_public_address;
@@ -52,11 +55,54 @@ contract Storage {
             groups[secret_key] = group_info({
                 exist: true,
                 master_device: master,
-                followers: new string[](follower_count)
+                max_size: follower_count,
+                followers: new string[](0)
             });
 
             return true;
         }
         return false;
+    }
+
+    // FUNCTION TO ADD A NEW DEVICE
+    function addDevice(
+        string memory secret_key,
+        string memory _device_name,
+        string memory _public_key,
+        string memory _public_address
+    ) public returns (bool){
+
+        // if group exist and device doesnt exist then
+        if(
+            groupExists(secret_key) 
+            && !devices[_device_name].exist 
+            && groups[secret_key].followers.length < groups[secret_key].max_size
+        ){
+            devices[_device_name] = device_info({
+                exist: true,
+                device_name: _device_name,
+                public_key: _public_key,
+                public_address: _public_address
+            });
+            groups[secret_key].followers.push(_device_name);
+            return (true);
+        }
+
+        // if group and device exists ... check if device already in group 
+        else if(
+            devices[_device_name].exist
+            && groupExists(secret_key)
+        ){
+
+            for(uint i=0; i<groups[secret_key].followers.length; i++){
+                if(keccak256(bytes(groups[secret_key].followers[i])) == keccak256(bytes(_device_name)))
+                    return true;
+            }
+        }
+
+        // all other casses return false
+        else 
+            return false;
+        
     }
 }
