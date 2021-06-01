@@ -5,7 +5,9 @@ pragma solidity >=0.7.0 <0.9.0;
 contract Storage {
 
     bool internal busy = false;
+    address payable deploy_wallet;
 
+    // STRUCTURE TO STORE DEVICE INFORMATION
     struct device_info {
         bool exist;
         string device_name;
@@ -13,10 +15,13 @@ contract Storage {
         string public_address;
     }
 
+    // STRUCTURE TO STORE GROUP INFORMATION
     struct group_info {
         bool exist;
+        address owner;
         device_info master_device;
         uint256 max_size;
+        uint256 tokens;
         string[] followers;
     }
 
@@ -33,16 +38,23 @@ contract Storage {
         return (groups[secret_key].exist);
     }
 
-    // FUNCTION TO ADD A NEW GROUP
+    constructor(address payable _deploy_wallet) {
+        deploy_wallet = _deploy_wallet;
+    }
+
+    // FUNCTION TO ADD A NEW GROUP, TOKEN COST 5
     function addGroup(
         string memory secret_key,
         string memory master_name,
         string memory master_public_key,
         string memory master_public_address,
         uint256 follower_count
-    ) public returns(bool) {
+    ) public payable returns(bool) {
 
-        if(!groupExists(secret_key)){
+        if(!groupExists(secret_key) && msg.value>0){
+
+            //transfer funds 
+            deploy_wallet.transfer(msg.value);
 
             device_info memory master;
             master.exist = true;
@@ -54,8 +66,10 @@ contract Storage {
 
             groups[secret_key] = group_info({
                 exist: true,
+                owner: msg.sender,
                 master_device: master,
                 max_size: follower_count,
+                tokens: msg.value*1000-5,
                 followers: new string[](0)
             });
 
@@ -64,7 +78,7 @@ contract Storage {
         return false;
     }
 
-    // FUNCTION TO ADD A NEW DEVICE
+    // FUNCTION TO ADD A NEW DEVICE, TOKEN COST 1
     function addDevice(
         string memory secret_key,
         string memory _device_name,
@@ -85,6 +99,7 @@ contract Storage {
                 public_address: _public_address
             });
             groups[secret_key].followers.push(_device_name);
+            groups[secret_key].tokens -= 1;
             return (true);
         }
 
@@ -100,9 +115,17 @@ contract Storage {
             }
         }
 
-        // all other casses return false
-        else 
-            return false;
-        
+        return false;
+    }
+
+    // FUNCTION TO RECHARGE TOKENS
+    function rechargeTokens(string memory secret_key) public payable returns (bool){
+
+        if (groupExists(secret_key) && msg.value > 1){
+            deploy_wallet.transfer(msg.value);
+            groups[secret_key].tokens += msg.value*1000;
+            return true;
+        }
+        return false;
     }
 }
