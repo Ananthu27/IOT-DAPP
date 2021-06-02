@@ -51,7 +51,7 @@ contract Storage {
         uint256 follower_count
     ) public payable returns(bool) {
 
-        if(!groupExists(secret_key) && msg.value>0){
+        if(!groupExists(secret_key) && msg.value>=10**18){
 
             //transfer funds 
             deploy_wallet.transfer(msg.value);
@@ -69,7 +69,7 @@ contract Storage {
                 owner: msg.sender,
                 master_device: master,
                 max_size: follower_count,
-                tokens: msg.value*1000-5,
+                tokens: (msg.value/10**18)*1000-5,
                 followers: new string[](0)
             });
 
@@ -121,9 +121,9 @@ contract Storage {
     // FUNCTION TO RECHARGE TOKENS
     function rechargeTokens(string memory secret_key) public payable returns (bool){
 
-        if (groupExists(secret_key) && msg.value > 1){
+        if (groupExists(secret_key) && msg.value >= 10**18){
             deploy_wallet.transfer(msg.value);
-            groups[secret_key].tokens += msg.value*1000;
+            groups[secret_key].tokens += (msg.value/10**18)*1000;
             return true;
         }
         return false;
