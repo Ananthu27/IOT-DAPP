@@ -13,6 +13,8 @@ contract Storage {
         string device_name;
         string public_key;
         string public_address;
+        bool master;
+        bool future_master;
     }
 
     // STRUCTURE TO STORE GROUP INFORMATION
@@ -38,6 +40,23 @@ contract Storage {
         return (groups[secret_key].exist);
     }
 
+    // FUNCTION TO CHECK IF DEVICE IS A FOLLOWER OF GROUP
+    function followerExists(
+        string memory secret_key,
+        string memory _device_name
+    )public returns (uint256){
+        if(
+            groupExists(secret_key) &&
+            devices[_device_name].exist
+        ){
+            for(uint i=0; i<groups[secret_key].followers.length; i++){
+                if(keccak256(bytes(groups[secret_key].followers[i])) == keccak256(bytes(_device_name)))
+                    return i+1;
+            }
+            return 0;
+        }
+    }
+
     constructor(address payable _deploy_wallet) {
         deploy_wallet = _deploy_wallet;
     }
@@ -61,9 +80,13 @@ contract Storage {
             master.device_name = master_name;
             master.public_key = master_public_key;
             master.public_address = master_public_address;
+            master.master = true;
+            master.future_master = true;
 
+            // adding master as new device
             devices[master_name] = master;
 
+            // creating/adding the new group
             groups[secret_key] = group_info({
                 exist: true,
                 owner: msg.sender,
@@ -73,17 +96,31 @@ contract Storage {
                 followers: new string[](0)
             });
 
+            groups[secret_key].followers.push(master_name)
+
+            return true;
+        }
+        return false;
+    }
+    
+    // FUNCTION TO RECHARGE TOKENS
+    function rechargeTokens(string memory secret_key) public payable returns (bool){
+
+        if (groupExists(secret_key) && msg.value >= 10**18){
+            deploy_wallet.transfer(msg.value);
+            groups[secret_key].tokens += (msg.value/10**18)*1000;
             return true;
         }
         return false;
     }
 
-    // FUNCTION TO ADD A NEW DEVICE, TOKEN COST 1
+    // FUNCTION TO ADD A NEW DEVICE, token cost 1
     function addDevice(
         string memory secret_key,
         string memory _device_name,
         string memory _public_key,
-        string memory _public_address
+        string memory _public_address,
+        bool memory _future_master
     ) public returns (bool){
 
         // if group exist and device doesnt exist then
@@ -96,7 +133,9 @@ contract Storage {
                 exist: true,
                 device_name: _device_name,
                 public_key: _public_key,
-                public_address: _public_address
+                public_address: _public_address,
+                master: false,
+                future_master: _future_master
             });
             groups[secret_key].followers.push(_device_name);
             groups[secret_key].tokens -= 1;
@@ -109,22 +148,63 @@ contract Storage {
             && groupExists(secret_key)
         ){
 
-            for(uint i=0; i<groups[secret_key].followers.length; i++){
-                if(keccak256(bytes(groups[secret_key].followers[i])) == keccak256(bytes(_device_name)))
-                    return true;
-            }
+            if(followerExists(secret_key,_device_name))
+                return true;
+
+            // if device not in group add it. Enables single device multiple group
+            groups[secret_key].followers.push(_device_name);
+            return true;
         }
 
         return false;
     }
 
-    // FUNCTION TO RECHARGE TOKENS
-    function rechargeTokens(string memory secret_key) public payable returns (bool){
+    // FUNCTION TO REMOVE A DEVICE FROM GROUP, token cost 1
+    function removeDevice(
+        string memory secret_key,
+        string memory _device_name,
+    )public returns (bool){
+        
+        index = followerExists(secret_key,_device_name);
+        // check if device is part of group
+        if(index){
+            index -= 1;
+            // check if index is correct
+            if(index>=0 && index<groups[secret_key].followers.length){
+                for (uint i=index; i<(groups[secret_key].followers.length-1) ; i++){
+                    groups[secret_key].followers[i] = groups[secret_key].followers[i+1];
+                }
+                delete groups[secret_key].followers[groups[secret_key].followers.length-1];
+                groups[secret_key].followers.length--;
+                groups[secret_key].tokens -= 1;
+                return true;
+            }
+        }
+        return false;
+    }
 
-        if (groupExists(secret_key) && msg.value >= 10**18){
-            deploy_wallet.transfer(msg.value);
-            groups[secret_key].tokens += (msg.value/10**18)*1000;
-            return true;
+    // FUNCTION TO CHANGE MASTER, token cost 1
+    function relinquishMaster(
+        string memory secret_key,
+        string memory _device_name
+    ) public retunrs (bool){
+
+        if (
+            groupExists(secret_key) &&
+            devices[_device_name].exist &&
+            // cannot be master of two groups !
+            !devices[_device_name].master &&
+            devices[_device_name].future_master
+        ){
+
+            if(followerExists(secret_key,_device_name)){
+                groups[secret_key].master = devices[_device_name];
+                groups[secret_key].tokens -= 1;
+                // remove master from followers as .... master is only replaced if and only if master dies.
+                removeDevice(secret_key,_device_name);
+                return true;
+            }
+
         }
         return false;
     }
