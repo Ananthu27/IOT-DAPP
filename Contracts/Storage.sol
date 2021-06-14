@@ -44,7 +44,7 @@ contract Storage {
     function followerExists(
         string memory secret_key,
         string memory _device_name
-    )public returns (uint256){
+    )public view returns (uint256){
         if(
             groupExists(secret_key) &&
             devices[_device_name].exist
@@ -55,6 +55,7 @@ contract Storage {
             }
             return 0;
         }
+        return 0;
     }
 
     constructor(address payable _deploy_wallet) {
@@ -96,7 +97,7 @@ contract Storage {
                 followers: new string[](0)
             });
 
-            groups[secret_key].followers.push(master_name)
+            groups[secret_key].followers.push(master_name);
 
             return true;
         }
@@ -120,7 +121,7 @@ contract Storage {
         string memory _device_name,
         string memory _public_key,
         string memory _public_address,
-        bool memory _future_master
+        bool _future_master
     ) public returns (bool){
 
         // if group exist and device doesnt exist then
@@ -148,7 +149,7 @@ contract Storage {
             && groupExists(secret_key)
         ){
 
-            if(followerExists(secret_key,_device_name))
+            if(followerExists(secret_key,_device_name)>0)
                 return true;
 
             // if device not in group add it. Enables single device multiple group
@@ -162,20 +163,20 @@ contract Storage {
     // FUNCTION TO REMOVE A DEVICE FROM GROUP, token cost 1
     function removeDevice(
         string memory secret_key,
-        string memory _device_name,
+        string memory _device_name
     )public returns (bool){
         
-        index = followerExists(secret_key,_device_name);
+        uint256 position = followerExists(secret_key,_device_name);
         // check if device is part of group
-        if(index){
-            index -= 1;
+        if(position>0){
+            uint256 index = position-1;
             // check if index is correct
             if(index>=0 && index<groups[secret_key].followers.length){
                 for (uint i=index; i<(groups[secret_key].followers.length-1) ; i++){
                     groups[secret_key].followers[i] = groups[secret_key].followers[i+1];
                 }
                 delete groups[secret_key].followers[groups[secret_key].followers.length-1];
-                groups[secret_key].followers.length--;
+                // groups[secret_key].followers.length--;
                 groups[secret_key].tokens -= 1;
                 return true;
             }
@@ -187,7 +188,7 @@ contract Storage {
     function relinquishMaster(
         string memory secret_key,
         string memory _device_name
-    ) public retunrs (bool){
+    ) public returns (bool){
 
         if (
             groupExists(secret_key) &&
@@ -197,8 +198,8 @@ contract Storage {
             devices[_device_name].future_master
         ){
 
-            if(followerExists(secret_key,_device_name)){
-                groups[secret_key].master = devices[_device_name];
+            if(followerExists(secret_key,_device_name)>0){
+                groups[secret_key].master_device = devices[_device_name];
                 groups[secret_key].tokens -= 1;
                 // remove master from followers as .... master is only replaced if and only if master dies.
                 removeDevice(secret_key,_device_name);
