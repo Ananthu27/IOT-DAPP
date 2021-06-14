@@ -1,0 +1,5 @@
+python web3 :: pip install web3
+python py-solc :: pip install py-solc
+python cryptography :: pip install cryptography
+ganache - download/install - https://www.trufflesuite.com/ganache
+solidity compiler - download/install - https://docs.soliditylang.org/en/latest/installing-solidity.html#binary-packages
