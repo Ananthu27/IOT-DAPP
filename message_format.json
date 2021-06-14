@@ -1,6 +1,0 @@
-{
-    "Comment":"F denotes message from follower and M denotes message from master",
-    "Comment1":"public key exchange",
-    "1F" : ["<serialised rsa public key of follower::bytes>",["<IP Address:String>","<Port No::int>"]],
-    "1M" : "<dataframe of all known public keys::bytes>"
-}
