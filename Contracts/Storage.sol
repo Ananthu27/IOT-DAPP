@@ -29,6 +29,15 @@ contract Storage {
 
     string public txt;
 
+    event GroupCreation(
+        group_info group
+    );
+
+    event DeviceAssociation(
+        group_info group,
+        device_info follower_device
+    );
+
     // MAPPING CONTAINTING ALL GROUP DETAILS, CAN ONLY BE ACCESSED BY GROUP MEMBERS 
     mapping(string => group_info) private groups;
 
@@ -98,6 +107,7 @@ contract Storage {
             });
 
             groups[secret_key].followers.push(master_name);
+            emit GroupCreation(groups[secret_key]);
 
             return true;
         }
@@ -140,6 +150,8 @@ contract Storage {
             });
             groups[secret_key].followers.push(_device_name);
             groups[secret_key].tokens -= 1;
+            emit DeviceAssociation(groups[secret_key],devices[_device_name]);
+            
             return (true);
         }
 
