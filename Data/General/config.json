@@ -1,7 +1,0 @@
-{
-    "address": "0x7658cF09620c1276Eb6B893f07EbbDc9D196137a",
-    "infura_endpoint" : "https://mainnet.infura.io/v3/a81ff64c0ad940c086c97313d3c0b40a" ,
-    "ganache_endpoint" : "http://127.0.0.1:7545",
-    "data_path" : "/ANNA/PROJECT/IOT-DAPP/Data/",
-    "contract_path" : "/ANNA/PROJECT/IOT-DAPP/Contracts/"
-}
