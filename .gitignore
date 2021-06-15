@@ -1,3 +1,6 @@
 __pycache__
 Logs
 IgnoreFiles
+Data/DeviceSpecific
+Data/Inbox
+Data/Outbox
