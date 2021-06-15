@@ -79,7 +79,7 @@ def deploy(file_path=None,bc_conn=None):
             abi, bytecode = getAbiAndBytecode(file_path)
             
             Contract = bc_conn.eth.contract(abi=abi,bytecode=bytecode)
-            tx_hash = Contract.constructor().transact()
+            tx_hash = Contract.constructor(bc_conn.eth.default_account).transact()
             tx_receipt = bc_conn.eth.wait_for_transaction_receipt(tx_hash)
             
             return tx_receipt
