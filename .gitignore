@@ -1,4 +1,6 @@
 __pycache__
 Logs
 IgnoreFiles
-Data/DeviceSpecific
+Data/DeviceSpecific/Inbox/*
+Data/DeviceSpecific/Outbox/*
+Data/DeviceSpecific/Transaction_receipt/*
