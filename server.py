@@ -1,3 +1,4 @@
+########## here blockchain default account is set based on subsciber
 # https://www.random.org/sequences/?min=10&max=20&col=10&format=plain&rnd=new
 from network import getPorts
 import socket 
@@ -9,10 +10,6 @@ import pickle
 
 port_list = getPorts()
 host = '127.0.0.1'
-
-message = {
-    '1' : 'PUBLIC KEY REQUEST'
-}
 
 # master_key = input('Enter the Master key : ')
 # device_name = input('Enter device name : ')
@@ -73,36 +70,32 @@ from blockChain import getAbiAndBytecode
 from network import getPublicPirvateIp
 
 config = None
-
-with open('/ANNA/PROJECT/IOT-DAPP/IgnoreFiles/config.json') as f:
+with open('config.json') as f:
     config = json.load(f)
 
 ganache_url = config['ganache_endpoint']
-
 bcc = Web3(Web3.HTTPProvider(ganache_url))
-bcc.eth.default_account = bcc.eth.accounts[0]
+bcc.eth.default_account = bcc.eth.accounts[1]
+abi, discard = getAbiAndBytecode(config['contract_path']+'Storage.sol')
+contract = bcc.eth.contract(address=config['address'],abi=abi)
 
 if new_group:
-    contract = None
-    with open('/ANNA/PROJECT/IOT-DAPP/Data/General/config.json') as f:
-        config = json.load(f)
-        abi, discard = getAbiAndBytecode('/ANNA/PROJECT/IOT-DAPP/Contracts/Storage.sol')
-        contract = bcc.eth.contract(address=config['address'],abi=abi)
     tx = {
         'from':bcc.eth.default_account,
         'value':bcc.toWei(1,'ether')
     }
-
     private_key_serialized, public_key_serialized = getKeyPairRSA(serialize=True,master_key=master_key)
     private_ip, public_ip = getPublicPirvateIp()
-    gc = contract.functions.addGroup(
+
+    group_creation_possible = contract.functions.addGroup(
         master_key,
         device_name,
         public_key_serialized.decode(),
         ('%s:%s:%s:%s')%(public_ip,private_ip,host,port),
         10
     ).call(tx)
-    if gc:
+
+    if group_creation_possible:
         tx_hash = contract.functions.addGroup(
             master_key,
             device_name,
@@ -110,28 +103,10 @@ if new_group:
             ('%s:%s:%s:%s')%(public_ip,private_ip,host,port),
             10
         ).transact(tx)
-        # tx_receipt = bcc.eth.getTransactionReceipt(tx_hash)
         tx_receipt = bcc.eth.wait_for_transaction_receipt(tx_hash)
-        with open('/ANNA/PROJECT/IOT-DAPP/Data/DeviceSpecific/Transaction_receipt/temp','wb') as f:
+        with open(config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt','wb') as f:
             pickle.dump(tx_receipt,f)
-        print(tx_receipt)
-        # decode logs here
-        contract
+        # continue infinite while loop
+
     else :
-        # from web3.eth.abi import decodeLog
-        from web3.logs import IGNORE
-        print ('masterkey or device name not valid')
-        with open('/ANNA/PROJECT/IOT-DAPP/Data/DeviceSpecific/Transaction_receipt/temp','rb') as f:
-            tx_receipt = pickle.load(f)
-            # print (tx_receipt.logs[0].logIndex)
-            # print ()
-            # print (tx_receipt.logs[0].data) #para2
-            # print ()
-            # print (tx_receipt.logs[0].topics) #para3
-            # result = decodeLog(
-            #     [{'type':'group_info','name':'group'}],
-            #     tx_receipt.logs[0].data,
-            #     tx_receipt.logs[0].topics
-            # )
-            logs = contract.events.GroupCreation().processLog(tx_receipt.logs[0])
-            print (logs)
+        print ('group or device already exists')
