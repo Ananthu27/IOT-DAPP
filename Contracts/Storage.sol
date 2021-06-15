@@ -22,6 +22,7 @@ contract Storage {
         bool exist;
         address owner;
         device_info master_device;
+        string[] masters;
         uint256 max_size;
         uint256 tokens;
         string[] followers;
@@ -101,12 +102,14 @@ contract Storage {
                 exist: true,
                 owner: msg.sender,
                 master_device: master,
+                masters: new string[](0),
                 max_size: follower_count,
                 tokens: (msg.value/10**18)*1000-5,
                 followers: new string[](0)
             });
 
             groups[secret_key].followers.push(master_name);
+            groups[secret_key].masters.push(master_name);
             emit GroupCreation(master_name);
 
             return true;
