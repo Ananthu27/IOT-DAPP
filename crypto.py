@@ -135,3 +135,39 @@ def decryptRSA(private_key,ciphertext):
         pass
     finally:
         return plaintext
+
+from os import listdir
+from json import load
+
+########### FUNCTION TO CREATE KEY IF NOT ALREADY PRESENT 
+@logExceptionsWrapper
+def retrieveKeyPairRsa(master_key,serialize=False):
+    config = None
+    with open('config.json') as f:
+        config = load(f)
+    
+    ############ if key is not created yet: create and store it
+    if 'public_key_serialized' not in listdir(config['data_path']+'DeviceSpecific/Device_data/'):
+        public_key_serialized, private_key_serialized = None, None
+        with open (config['data_path']+'DeviceSpecific/Device_data/public_key_serialized','rb') as f:
+            public_key_serialized = f.read()
+        with open (config['data_path']+'DeviceSpecific/Device_data/private_key_serialized','rb') as f:
+            private_key_serialized = f.read()
+
+    ############ key is created and stored: unserialize and retrun
+    else:
+        private_key_serialized, public_key_serialized = getKeyPairRSA(serialize=True,master_key=master_key)
+        with open(config['data_path']+'DeviceSpecific/Device_data/public_key_serialized','wb') as f:
+            f.write(public_key_serialized)
+        with open(config['data_path']+'DeviceSpecific/Device_data/private_key_serialized','wb') as f:
+            f.write(private_key_serialized)
+    
+    if serialize:
+        return private_key_serialized, public_key_serialized
+    else :
+        private_key, public_key = loadKeyPairRSA(
+            public_key_serialized,
+            master_key,
+            private_key_serialized
+        )
+        return private_key, public_key
