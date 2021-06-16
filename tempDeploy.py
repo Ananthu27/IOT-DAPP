@@ -12,7 +12,7 @@ web3 = Web3(Web3.HTTPProvider(ganache_url))
 
 def deploy_write_addr():
 	web3.eth.default_account = web3.eth.accounts[0]
-	receipt = deploy(config['contract_path']+'Storage.sol',web3)
+	receipt = deploy(config['main_contract_path'],web3)
 	with open('config.json','w') as f:
 		config['address'] = receipt.contractAddress
 		json.dump(config,f)

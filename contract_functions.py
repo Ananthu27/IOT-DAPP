@@ -10,7 +10,7 @@ with open('config.json') as f:
 ganache_url = config['ganache_endpoint']
 bcc = Web3(Web3.HTTPProvider(ganache_url))
 bcc.eth.default_account = bcc.eth.accounts[1]
-abi , disacrd = getAbiAndBytecode(config['contract_path']+'Storage.sol')
+abi , disacrd = getAbiAndBytecode(config['main_contract_path'])
 contract = bcc.eth.contract(address=config['address'],abi=abi)
 
 ########### FUNCTION TO VERIFY GROUP CREATION TRNASACTION RECEIPT
