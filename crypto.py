@@ -146,15 +146,15 @@ def retrieveKeyPairRsa(master_key,serialize=False):
     with open('config.json') as f:
         config = load(f)
     
-    ############ if key is not created yet: create and store it
-    if 'public_key_serialized' not in listdir(config['data_path']+'DeviceSpecific/Device_data/'):
+    ############ if key is created and stored: retrieve
+    if 'public_key_serialized' in listdir(config['data_path']+'DeviceSpecific/Device_data/'):
         public_key_serialized, private_key_serialized = None, None
         with open (config['data_path']+'DeviceSpecific/Device_data/public_key_serialized','rb') as f:
             public_key_serialized = f.read()
         with open (config['data_path']+'DeviceSpecific/Device_data/private_key_serialized','rb') as f:
             private_key_serialized = f.read()
 
-    ############ key is created and stored: unserialize and retrun
+    ############ key is not created and stored: create and store then return
     else:
         private_key_serialized, public_key_serialized = getKeyPairRSA(serialize=True,master_key=master_key)
         with open(config['data_path']+'DeviceSpecific/Device_data/public_key_serialized','wb') as f:
