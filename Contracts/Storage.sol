@@ -12,6 +12,7 @@ contract Storage {
         bool exist;
         string device_name;
         string public_key;
+        string[] previous_keys;
         string public_address;
         bool master;
         bool future_master;
@@ -90,6 +91,7 @@ contract Storage {
             master.exist = true;
             master.device_name = master_name;
             master.public_key = master_public_key;
+            master.previous_keys = new string[](0);
             master.public_address = master_public_address;
             master.master = true;
             master.future_master = true;
@@ -112,6 +114,17 @@ contract Storage {
             groups[secret_key].masters.push(master_name);
             emit GroupCreation(master_name);
 
+            return true;
+        }
+        return false;
+    }
+
+    // FUNCTION TO REMOVE GROUP
+    function removeGroup(string memory secret_key) public returns (bool){
+
+        if (groupExists(secret_key)){
+            devices[groups[secret_key].master_device.device_name].master = false;
+            delete groups[secret_key];
             return true;
         }
         return false;
@@ -147,10 +160,12 @@ contract Storage {
                 exist: true,
                 device_name: _device_name,
                 public_key: _public_key,
+                previous_keys: new string[](0),
                 public_address: _public_address,
                 master: false,
                 future_master: _future_master
             });
+            devices[_device_name].previous_keys.push(_public_key);
             groups[secret_key].followers.push(_device_name);
             groups[secret_key].tokens -= 1;
             emit DeviceAssociation(groups[secret_key].master_device.device_name,_device_name);
@@ -163,13 +178,25 @@ contract Storage {
             devices[_device_name].exist
             && groupExists(secret_key)
         ){
+            // check if public key is same
+            if(keccak256(bytes(devices[_device_name].public_key)) == keccak256(bytes(_public_key))){
+                
+                if(followerExists(secret_key,_device_name)>0)
+                    return true;
 
-            if(followerExists(secret_key,_device_name)>0)
+                // if device not in group add it. Enables single device multiple group
+                groups[secret_key].followers.push(_device_name);
+                emit DeviceAssociation(groups[secret_key].master_device.device_name,_device_name);
                 return true;
-
-            // if device not in group add it. Enables single device multiple group
-            groups[secret_key].followers.push(_device_name);
-            return true;
+            }
+            // if public key is different archive it
+            // this is marked to change : to check of public key update
+            else{
+                devices[_device_name].public_key = _public_key;
+                devices[_device_name].previous_keys.push(_public_key);
+                // check in group here?
+            }
+            
         }
 
         return false;
