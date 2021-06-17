@@ -11,6 +11,28 @@ config = None
 with open('config.json','r') as f:
     config = load(f)
 
+########## IMPORTS FOR LOGGING
+from logger import createLogger
+from logging import INFO
+from functools import wraps
+
+crypto_logger = createLogger(name='Device',level=INFO,state='DEVELOPMENT')
+
+########## WRAPPER FOR LOGGER
+def logExceptionsWrapper(function):
+    @wraps(function)
+    def logExceptions(*args,**kwargs):
+        try:
+            return function(*args,**kwargs)
+        except:
+            print ('################# DEVICE ERROR ###############')
+            crypto_logger.exception('exception in device_functions.py.%s'%(function.__name__))
+            print ('exception in device_functions.py.%s'%(function.__name__))
+            print ('################# DEVICE ERROR ###############')
+    return logExceptions
+
+########## FUNCTION TO CREATE GROUP TABLE
+@logExceptionsWrapper
 def createGroupTable(
     port,
     device_name,
@@ -33,13 +55,31 @@ def createGroupTable(
     group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
 
 ########## FUNCTION TO RETURN GROUP TABLE AS PANDAS DF
+@logExceptionsWrapper
 def retrieveGroupTable():
     group_table = None
     if 'group_table.json' in listdir(config['data_path']+'DeviceSpecific/Device_data/'):
         group_table = pd.read_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
     return group_table
 
+########## FUNCTION TO UPDATE GROUP TABLE ON PING
+@logExceptionsWrapper
+def updateLastPing(device_name):
+    group_table = retrieveGroupTable()
+    result = False
+    if group_table is not None:
+        try:
+            device = group_table.loc[device_name]
+            device['LAST_PING'] = datetime.now()
+            result = True
+        except KeyError:
+            result = False
+        finally:
+            group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
+    return result
+
 ########## FUNCITON TO ADD DEVICE TO GROUP TABLE
+@logExceptionsWrapper
 def addDeviceToGroupTable(
     ip, port,
     device_name,
@@ -52,6 +92,7 @@ def addDeviceToGroupTable(
     if group_table is not None:
         try:
             device = group_table.loc[device_name]
+            device['LAST_PING'] = datetime.now()
             result = False
         except KeyError:
             group_table.loc[device_name]['IP'] = ip
@@ -67,6 +108,5 @@ def addDeviceToGroupTable(
             result = True
         finally:
             group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
-            return result
-
-addDeviceToGroupTable('test')
+    
+    return result
