@@ -4,7 +4,7 @@ import pandas as pd
 from network import getPublicPirvateIp
 from datetime import datetime
 from crypto import retrieveKeyPairRsa
-from json import load
+from json import dump, load
 from os import listdir
 
 config = None
@@ -110,3 +110,13 @@ def addDeviceToGroupTable(
             group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
     
     return result
+
+########## FUNCTION TO STORE MY DEVICE DETAILS AS JSON
+@logExceptionsWrapper
+def storeMyDevice(port,device_name):
+    details = {
+        'device_name' : device_name,
+        'port' : port
+    }
+    with open(config['data_path']+'DeviceSpecific/Device_data/myDevice.json','w') as f:
+        dump(details,f)
