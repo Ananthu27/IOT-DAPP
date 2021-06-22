@@ -92,25 +92,32 @@ contract Storage {
 
             //transfer funds 
             deploy_wallet.transfer(msg.value);
+            
+            //if master device exists
+            if (devices[master_name].exist)
+                if (devices[master_name].master || !devices[master_name].future_master)
+                    return false;
+            // if master device doesn't exists
+            else {
+                device_info memory master;
+                master.exist = true;
+                master.device_name = master_name;
+                master.public_key = master_public_key;
+                master.previous_keys = new string[](0);
+                master.public_address = master_public_address;
+                master.master = true;
+                master.future_master = true;
 
-            device_info memory master;
-            master.exist = true;
-            master.device_name = master_name;
-            master.public_key = master_public_key;
-            master.previous_keys = new string[](0);
-            master.public_address = master_public_address;
-            master.master = true;
-            master.future_master = true;
-
-            // adding master as new device
-            devices[master_name] = master;
-            emit DeviceAssociation(master_name, master_name);
+                // adding master as new device
+                devices[master_name] = master;
+                emit DeviceAssociation(master_name, master_name);
+            }
 
             // creating/adding the new group
             groups[secret_key] = group_info({
                 exist: true,
                 owner: msg.sender,
-                master_device: master,
+                master_device: devices[master_name],
                 masters: new string[](0),
                 max_size: follower_count,
                 tokens: (msg.value/10**18)*1000-5,
