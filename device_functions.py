@@ -4,7 +4,7 @@ import pandas as pd
 from network import getPublicPirvateIp
 from datetime import datetime
 from crypto import retrieveKeyPairRsa
-from json import dump, load
+from json import dump, load, dumps
 from os import listdir
 
 config = None
@@ -13,7 +13,7 @@ with open('config.json','r') as f:
 
 ########## IMPORTS FOR LOGGING
 from logger import createLogger
-from logging import INFO
+from logging import INFO, log
 from functools import wraps
 
 crypto_logger = createLogger(name='Device',level=INFO,state='DEVELOPMENT')
@@ -120,3 +120,69 @@ def storeMyDevice(port,device_name):
     }
     with open(config['data_path']+'DeviceSpecific/Device_data/myDevice.json','w') as f:
         dump(details,f)
+
+
+########################################                                           ##############################
+######################################## MESSAGES AND MESSAGE REPLIES FROM HERE ON ##############################
+########################################                                           ##############################
+
+import pickle
+from urllib.request import urlopen
+from crypto import retrieveKeyPairRsa
+from exceptions import PayloadExceedsUdpMtu
+
+########## FUNCTION TO GET TRUE RANDOM NUMBER
+@logExceptionsWrapper
+def getTrueRandom(length=10):
+    url = 'https://www.random.org/sequences/?min=0&max=9&col=%d&format=plain&rnd=new'%(int(length))
+    nonce = None
+    response = urlopen(url).read()
+    response = response.decode()
+    nonce = response.replace('\t','').replace('\n','')
+    with open(config['data_path']+'DeviceSpecific/Device_data/last_nonce','w') as f:
+        f.write(nonce)
+    return nonce
+
+########## FUNCTION TO CHECK FOR CORRECT NONCE
+@logExceptionsWrapper
+def checkNonce(msg,nonce):
+    msg = pickle.loads(msg)
+    if msg['nonce'] == nonce:
+        return True
+    return False
+
+########## FUNCTION TO RETURN MESSAGE NUMBER
+@logExceptionsWrapper
+def getMessageNumber(msg):
+    msg = pickle.loads(msg)
+    return msg['message_no']
+
+########## FUNCTION TO CREATE MESSAGE TO EXCHANGE PUBLIC KEY
+@logExceptionsWrapper
+def getPublicKeyMessage(master_key,nonce=None):
+    discard, public_key_serialised = retrieveKeyPairRsa(master_key,serialize=True)
+    msg = {
+        'message_no' : '0',
+        'nonce' : nonce if nonce is not None else getTrueRandom(),
+        'public_key_serialised' : public_key_serialised
+    }
+    msg = pickle.dumps(msg)
+    if len(msg) >= (2**16-8):
+        raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
+    return msg
+
+########## FUNCTION TO CREATE ASSOCIATION REQUEST MESSAGE
+@logExceptionsWrapper
+def getAssociationRequestMssg():
+    msg = None
+    # check if association transaction is present
+    if 'GroupCreationReceipt' in listdir(config['data_path']+'DeviceSpecific/Transaction_receipt/'):
+        with open (config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt','rb') as f:
+            tx_receipt = pickle.load(f)
+            msg = {
+                'message_no' : '1',
+                'nonce' : getTrueRandom(10),
+                'association_tx_receipt' : tx_receipt
+            }
+            msg = pickle.dumps(msg)
+    return msg
