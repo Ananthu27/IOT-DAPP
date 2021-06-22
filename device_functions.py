@@ -1,5 +1,3 @@
-# device IP, Port, Unique Name, public key, timestamp of Joining, auto inc count(precidence for new master), last ping time
-
 import pandas as pd
 from network import getPublicPirvateIp
 from datetime import datetime
@@ -143,19 +141,10 @@ def getTrueRandom(length=10):
         f.write(nonce)
     return nonce
 
-########## FUNCTION TO CHECK FOR CORRECT NONCE
+########## FUNCTION TO UN PICKLE MESSAGE
 @logExceptionsWrapper
-def checkNonce(msg,nonce):
-    msg = pickle.loads(msg)
-    if msg['nonce'] == nonce:
-        return True
-    return False
-
-########## FUNCTION TO RETURN MESSAGE NUMBER
-@logExceptionsWrapper
-def getMessageNumber(msg):
-    msg = pickle.loads(msg)
-    return msg['message_no']
+def getMessage(msg):
+    return pickle.loads(msg)
 
 ########## FUNCTION TO CREATE MESSAGE TO EXCHANGE PUBLIC KEY
 @logExceptionsWrapper
