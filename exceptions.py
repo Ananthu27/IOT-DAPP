@@ -32,3 +32,16 @@ class FileExtError(Exception):
     
     def __str__(self):
         return ' %s :: required %s in %s'%(self.message,self.required,self.function)
+
+########## THROWN WHEN MESSAGE SIZE IS TOO BIG TO FIT IN UDP PAYLOAD:
+class PayloadExceedsUdpMtu(Exception):
+    
+    def __init__(self,size,function,message='Message size has exceeded upd payload size'):
+        self.size = size
+        self.function = function
+        self.message = message
+        super().__init__(self.message)
+    
+    def __str__(self):
+        return ' %s :: current size %s (bytes) in %s'%(self.message,str(self.size),self.function)
+ 
