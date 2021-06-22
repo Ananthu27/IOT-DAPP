@@ -43,8 +43,9 @@ assume master dead if last aliveList > 5min
 
 2. life loop :
 	if master :
+		if new goroup create it .
 		while(true):
-			1 check any device in aliveList time > 5min 
+			1 check any device in aliveList time > 5min
 			2 check inbox,
 			3 check outbox
 	if not master :
