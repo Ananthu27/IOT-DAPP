@@ -29,6 +29,12 @@ contract Storage {
         string[] followers;
     }
 
+    struct message {
+        string from_device;
+        string to_device;
+        string message;
+    }
+
     string public txt;
 
     event GroupCreation(
@@ -98,6 +104,7 @@ contract Storage {
 
             // adding master as new device
             devices[master_name] = master;
+            emit DeviceAssociation(master_name, master_name);
 
             // creating/adding the new group
             groups[secret_key] = group_info({
