@@ -1,19 +1,35 @@
-########## here blockchain default account is set based on subsciber
-from network import getPorts
+########## HERE BLOCKCHAIN DEFAULT ACCOUNT IS SET BASED ON SUBSCRIBER
+
+########## GENERAL IMPORTS
 import socket 
 import traceback
-from crypto import retrieveKeyPairRsa
+import json
+from web3 import Web3
 
+########## USER DEFINED FUNCTION IMPORTS
+from network import getPorts
+from crypto import retrieveKeyPairRsa
+from blockChain import getAbiAndBytecode
+from device_functions import storeMyDevice
+from device_functions import getPublicKeyMessage, getMessage
+from contract_functions import createNewGroup
+
+########## INPUT FOR SERVER 
 host = '127.0.0.1'
 master = True
 new_group = True
 master_key = 'Em0C2Kv9pM'
 device_name = 'testMaster'
 
+########## LOADING CONFIGURATION HERE
+config = None
+with open('config.json') as f:
+    config = json.load(f)
+
+########## ESTABLISHING PORT FOR SERVER HERE
 port_list = getPorts()
 if '1111' not in port_list and master:
-    port = 1111
-    
+    port = 1111    
 else :
     port = None
     for i in range (6*10**4,6*10**4+2**12,2):
@@ -21,31 +37,20 @@ else :
             port = i
             break
 
-########## this is the main frame 
-import json
-from web3 import Web3
-from blockChain import getAbiAndBytecode
-from network import getPublicPirvateIp
-from device_functions import createGroupTable, retrieveGroupTable, storeMyDevice
-from device_functions import getPublicKeyMessage, getMessage
-from contract_functions import createNewGroup
-
-########## LOADING CONFIGURATION HERE
-config = None
-with open('config.json') as f:
-    config = json.load(f)
-
 ########## WRITING NEW DEVICE DATA HERE
 storeMyDevice(port,device_name)
 
+########## SETTING UP CONNECTION TO BLOCKCHAIN
 ganache_url = config['ganache_endpoint']
 bcc = Web3(Web3.HTTPProvider(ganache_url))
-bcc.eth.default_account = bcc.eth.accounts[1]
+bcc.eth.default_account = bcc.eth.accounts[config['default_subsciber_accout']]
 abi, discard = getAbiAndBytecode(config['main_contract_path'])
 contract = bcc.eth.contract(address=config['address'],abi=abi)
 
+########## LOADING KEYS HERE
 private_key_serialized, public_key_serialized = retrieveKeyPairRsa(master_key,serialize=True)
 
+########## THIS IS THE MAIN FRAME
 # if this device is a master device
 if master:
     if new_group:
