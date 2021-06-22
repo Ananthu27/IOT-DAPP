@@ -44,4 +44,14 @@ class PayloadExceedsUdpMtu(Exception):
     
     def __str__(self):
         return ' %s :: current size %s (bytes) in %s'%(self.message,str(self.size),self.function)
- 
+
+######### THROWN WHEN THERE IS NONCE MISSMATCH ... HINTS POTENTIAL MESSAGE REPLAY ATTACK
+class NonceMissMatch(Exception):
+    
+    def __init__(self,device,message='Message size has exceeded upd payload size'):
+        self.device = device
+        self.message = message
+        super().__init__(self.message)
+    
+    def __str__(self):
+        return ' %s :: nonce missmatch with device at :: %s'%(self.message,self.device)
