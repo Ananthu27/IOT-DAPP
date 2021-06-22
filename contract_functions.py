@@ -19,7 +19,7 @@ from network import getPublicPirvateIp
 from device_functions import createGroupTable
 
 ########## FUNCITON TO CREATE A NEW GROUP
-def createNewGroup(master_key,host,public_key_serialized):
+def createNewGroup(master_key,public_key_serialized,host = '127.0.0.1'):
     tx = {
             'from':bcc.eth.default_account,
             'value':bcc.toWei(1,'ether')
@@ -52,6 +52,7 @@ def createNewGroup(master_key,host,public_key_serialized):
         # creating group table
         createGroupTable(my_device['port'],my_device['device_name'],master_key)
         return True
+        
     return False
  
 
