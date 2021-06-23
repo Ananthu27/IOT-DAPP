@@ -92,35 +92,38 @@ if device_object.master:
                 msg, address = s.recvfrom(1024)
 
                 try :
-                    msg = decryptRSA(device_object.private_key,msg)
-                except Exception as e:
-                    pass
-                finally :
                     msg = message_object.getMessage(msg)
+                    if msg is None:
+                        raise Exception()
+                except Exception as e:
+                    msg = decryptRSA(device_object.private_key,msg)
+                    msg = message_object.getMessage(msg)
+                finally :
                     message_no = msg['message_no']
+                    server_logger.info('\nMESSAGE NO : %s FROM (%s,%d)'%(message_no,address[0],address[1]))
                 
                 ########### ANSWER DIFFERNET MESSAGES HERE
                 
                 ########### PUBLIC KEY EXCHANGE MESSAGES HANDLED HERE, MESSAGE NUMBER = 0
                 if message_no == '0':
                     server_logger.info('\n')
-                    server_logger.info('\nRECIVED MESSAGE:0 FROM',address)
+                    server_logger.info('\nPUBLIC KEY EXCHANGE BEGIN WITH (%s,%d)'%(address[0],address[1]))
                     nonce = msg['nonce']
                     with open((config['data_path']+'DeviceSpecific/Temp/%s_public_key')%(str(address[1])),'wb') as f:
-                        f.write(msg['public_key_serialised'])
+                        f.write(msg['public_key_serialized'])
                     response_msg = message_object.getPublicKeyMessage(device_object,to_port=address[1],nonce=nonce) 
                     s.sendto(response_msg,address)
-                    server_logger.info('\nPUBLIC KEY EXCHANGE COMPLETE WITH',address)
+                    server_logger.info('\nPUBLIC KEY EXCHANGE COMPLETE WITH (%s,%d)'%(address[0],address[1]))
 
                 ########### INCOMING ASSOCIATION REQUEST HANDLED HERE, MESSAGE NUMBER = 1
                 elif message_no == '1':
                     server_logger.info('\n')
-                    server_logger.info('\nASSOCIATION REQUEST FROM ',address)
+                    server_logger.info('\nASSOCIATION REQUEST FROM (%s,%d)'%(address[0],address[1]))
                     nonce = msg['nonce']
                     association_msg = msg
                     # if device is authenticated 
                     if device_object.verifyDeviceAssociation(association_msg['association_tx_receipt']):
-                        server_logger.info('\nVERIFIED DEVICE ASSOCIATION FOR',address)
+                        server_logger.info('\nVERIFIED DEVICE ASSOCIATION FOR (%s,%d)'%(address[0],address[1]))
                         # add to group table here
                         device_object.addDeviceToGroupTable(
                             '%s::%s'%(private_ip,public_ip),
@@ -129,7 +132,7 @@ if device_object.master:
                             association_msg['public_key_serialized'],
                             association_msg['future-master']
                         )
-                        server_logger.info('\nADDED',address,'TO GROUPTABLE')
+                        server_logger.info('\nADDED (%s,%d) TO GROUPTABLE'%(address[0],address[1]))
                         response_msg = message_object.getAssociationResponseMssg(nonce)
                         enc_reponse_msg = response_msg
                         if isfile((config['data_path']+'DeviceSpecific/Temp/%s_public_key')%(str(address[1]))):
@@ -138,14 +141,14 @@ if device_object.master:
                                 discard, to_public_key = loadKeyPairRSA(public_key_serialized,device_object.master_key)
                                 enc_reponse_msg = encryptRSA(to_public_key,response_msg)
                         s.sendto(enc_reponse_msg,address)
-                        server_logger.info('\nASSOCIATION RESPONSE SENT TO',address)
-                        server_logger.warn('\nASSOCIATION REQUEST COMPLETE WITH',address)
+                        server_logger.info('\nASSOCIATION RESPONSE SENT TO (%s,%d)'%(address[0],address[1]))
+                        server_logger.warn('\nASSOCIATION REQUEST COMPLETE WITH (%s,%d)'%(address[0],address[1]))
                     else:
-                        server_logger.warn('\nSUSPECT',address)
-                        server_logger.warn('\nASSOCIATION REQUEST INCOMPLETE WITH',address)
+                        server_logger.warn('\nSUSPECT (%s,%d)'%(address[0],address[1]))
+                        server_logger.warn('\nASSOCIATION REQUEST INCOMPLETE WITH (%s,%d)'%(address[0],address[1]))
         
         except OSError:
-            server_logger.info('\nPort :',port,'taken')
+            server_logger.info('\nPort : %d taken'%(port))
         
         except KeyboardInterrupt:
             server_logger.info('\n-- EXITING ON : KeyboardInterrupt --')
@@ -186,8 +189,8 @@ else:
                     msg , address = s.recvfrom(1024)
                     msg = message_object.getMessage(msg)
                     server_logger.info('\nPUBLIC KEY EXCHANGE WITH MASTER COMPLETE')
-                    
-                    if device_object.last_nonce[1111] == msg['nonce']:
+
+                    if device_object.last_nonce[str(1111)] == msg['nonce']:
                         server_logger.info('\nINITIATING DEVICE ASSOCIATION REQUEST')
                         association_msg = message_object.getAssociationRequestMssg(device_object,1111)
                         discard, to_public_key = loadKeyPairRSA(msg['public_key_serialized'],device_object.master_key)
@@ -208,7 +211,7 @@ else:
                     new_device = False
         
         except OSError:
-            server_logger.info('\nPort :',port,'taken')
+            server_logger.info('\nPort : %d taken'%(port))
 
         except KeyboardInterrupt:
             server_logger.info('\n-- EXITING ON : KeyboardInterrupt --')

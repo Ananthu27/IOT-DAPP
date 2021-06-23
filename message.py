@@ -60,7 +60,10 @@ class Message:
     ########## FUNCTION TO UN PICKLE MESSAGE
     @logExceptionsWrapper
     def getMessage(self,msg):
-        return pickle.loads(msg)
+        try :
+            return pickle.loads(msg)
+        except:
+            return None
 
     ########## FUNCTION TO CREATE MESSAGE TO EXCHANGE PUBLIC KEY
     @logExceptionsWrapper
@@ -69,7 +72,7 @@ class Message:
         # if nonce exist its a reply message and nonce need not be saved/recorded
         if to_port is not None and nonce is None:
             nonce = getTrueRandom()
-            device_object.last_nonce[to_port] = nonce
+            device_object.last_nonce[str(to_port)] = nonce
         msg = {
             'message_no' : '0',
             'nonce' : nonce,
@@ -89,7 +92,7 @@ class Message:
             with open (config['data_path']+'DeviceSpecific/Transaction_receipt/DeviceAssociationReceipt','rb') as f:
                 tx_receipt = pickle.load(f)
                 nonce = getTrueRandom()
-                device_object.last_nonce[to_port] = nonce
+                device_object.last_nonce[str(to_port)] = nonce
                 msg = {
                     'message_no' : '1',
                     'nonce' : nonce,
