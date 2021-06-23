@@ -138,8 +138,6 @@ def getTrueRandom(length=10):
     response = urlopen(url).read()
     response = response.decode()
     nonce = response.replace('\t','').replace('\n','')
-    with open(config['data_path']+'DeviceSpecific/Device_data/last_nonce','w') as f:
-        f.write(nonce)
     return nonce
 
 ########## FUNCTION TO UN PICKLE MESSAGE
