@@ -5,3 +5,4 @@ Data/DeviceSpecific/Inbox/*
 Data/DeviceSpecific/Outbox/*
 Data/DeviceSpecific/Transaction_receipt/*
 Data/DeviceSpecific/Device_data/*
+Data/DeviceSpecific/Temp/*

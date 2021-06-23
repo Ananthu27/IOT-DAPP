@@ -54,7 +54,37 @@ def createNewGroup(master_key,public_key_serialized,host = '127.0.0.1'):
         return True
         
     return False
- 
+
+########## FUNCTION TO CREATE A NEW DEVICE
+def createNewDevice(master_key,public_key_serialized,host = '127.0.0.1',future_master=False):
+    private_ip, public_ip = getPublicPirvateIp()
+    my_device = None
+    with open(config['data_path']+'DeviceSpecific/Device_data/myDevice.json','r') as f:
+        my_device = json.load(f)
+
+    device_association_possible = contract.functions.addDevice(
+        master_key,
+        my_device['device_name'],
+        public_key_serialized.decode(),
+        ('%s:%s:%s:%s')%(public_ip,private_ip,host,my_device['port']),
+        future_master
+    ).call()
+
+    if device_association_possible:
+        tx_hash = contract.functions.addDevice(
+            master_key,
+            my_device['device_name'],
+            public_key_serialized.decode(),
+            ('%s:%s:%s:%s')%(public_ip,private_ip,host,my_device['port']),
+            future_master
+        ).transact()
+        tx_receipt = bcc.eth.wait_for_transaction_receipt(tx_hash)
+        # storing device association transaction receipt
+        with open(config['data_path']+'DeviceSpecific/Transaction_receipt/DeviceAssociationReceipt','wb') as f:
+            pickle.dump(tx_receipt,f)
+        return True
+        
+    return False 
 
 ########## FUNCTION TO VERIFY GROUP CREATION TRNASACTION RECEIPT
 def verifyGroupCreation(tx_receipt):

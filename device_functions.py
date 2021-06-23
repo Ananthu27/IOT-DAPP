@@ -146,13 +146,27 @@ def getTrueRandom(length=10):
 def getMessage(msg):
     return pickle.loads(msg)
 
+########## FUNCTION TO RECORD LAST NONCE
+@logExceptionsWrapper
+def storeNonce(port,nonce):
+    with open(config['data_path']+'DeviceSpecific/Device_data/last_nonce.json','r+') as f:
+        last_nonce = load(f)
+        last_nonce[port] = nonce
+        dump(last_nonce,f) 
+
 ########## FUNCTION TO CREATE MESSAGE TO EXCHANGE PUBLIC KEY
 @logExceptionsWrapper
-def getPublicKeyMessage(master_key,nonce=None):
+def getPublicKeyMessage(master_key,to_port=None,nonce=None):
     discard, public_key_serialised = retrieveKeyPairRsa(master_key,serialize=True)
+
+    # if nonce exist its a reply message and nonce need not be saved/recorded
+    if to_port is not None and nonce is None:
+        nonce = getTrueRandom()
+        storeNonce(to_port,nonce)
+
     msg = {
         'message_no' : '0',
-        'nonce' : nonce if nonce is not None else getTrueRandom(),
+        'nonce' : nonce,
         'public_key_serialised' : public_key_serialised
     }
     msg = pickle.dumps(msg)
@@ -161,17 +175,17 @@ def getPublicKeyMessage(master_key,nonce=None):
     return msg
 
 ########## FUNCTION TO CREATE ASSOCIATION REQUEST MESSAGE
-@logExceptionsWrapper
-def getAssociationRequestMssg():
-    msg = None
-    # check if association transaction is present
-    if 'GroupCreationReceipt' in listdir(config['data_path']+'DeviceSpecific/Transaction_receipt/'):
-        with open (config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt','rb') as f:
-            tx_receipt = pickle.load(f)
-            msg = {
-                'message_no' : '1',
-                'nonce' : getTrueRandom(10),
-                'association_tx_receipt' : tx_receipt
-            }
-            msg = pickle.dumps(msg)
-    return msg
+# @logExceptionsWrapper
+# def getAssociationRequestMssg():
+#     msg = None
+#     # check if association transaction is present
+#     if 'GroupCreationReceipt' in listdir(config['data_path']+'DeviceSpecific/Transaction_receipt/'):
+#         with open (config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt','rb') as f:
+#             tx_receipt = pickle.load(f)
+#             msg = {
+#                 'message_no' : '1',
+#                 'nonce' : getTrueRandom(10),
+#                 'association_tx_receipt' : tx_receipt
+#             }
+#             msg = pickle.dumps(msg)
+#     return msg
