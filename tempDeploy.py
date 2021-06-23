@@ -15,6 +15,6 @@ def deploy_write_addr():
 	receipt = deploy(config['main_contract_path'],web3)
 	with open('config.json','w') as f:
 		config['address'] = receipt.contractAddress
-		json.dump(config,f)
+		json.dump(config,fp=f,indent=4)
 
 deploy_write_addr()
