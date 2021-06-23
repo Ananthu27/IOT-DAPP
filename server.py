@@ -1,6 +1,7 @@
 ########## HERE BLOCKCHAIN DEFAULT ACCOUNT IS SET BASED ON SUBSCRIBER
 
 ########## GENERAL IMPORTS
+from pickle import NONE
 from posix import listdir
 import socket 
 import traceback
@@ -11,7 +12,7 @@ from os.path import isfile
 ########## USER DEFINED FUNCTION IMPORTS
 from network import getPorts, getPublicPirvateIp
 from crypto import loadKeyPairRSA
-from crypto import encryptRSA, decryptRSA
+from crypto import decryptRSA
 
 ########## USER DEFINED CLASS IMPORTS
 from message import Message
@@ -20,7 +21,7 @@ from device import Device
 ########## INPUT FOR SERVER 
 host = '127.0.0.1'
 master = True
-new_group = True
+new_group = False
 new_device = True
 future_master = False
 master_key = 'Em0C2Kv9pM'
@@ -90,37 +91,29 @@ if device_object.master:
 
                 # getting incoming message and message number
                 msg, address = s.recvfrom(1024)
-
-                try :
-                    msg = message_object.getMessage(msg)
-                    if msg is None:
-                        raise Exception()
-                except Exception as e:
-                    msg = decryptRSA(device_object.private_key,msg)
-                    msg = message_object.getMessage(msg)
-                finally :
-                    message_no = msg['message_no']
-                    server_logger.info('\nMESSAGE NO : %s FROM (%s,%d)'%(message_no,address[0],address[1]))
+                msg = message_object.getMessage(msg)
+                message_no = msg['message_no']
+                server_logger.info('\nMESSAGE NO : %s FROM (%s,%d)'%(message_no,address[0],address[1]))
                 
                 ########### ANSWER DIFFERNET MESSAGES HERE
                 
-                ########### PUBLIC KEY EXCHANGE MESSAGES HANDLED HERE, MESSAGE NUMBER = 0
+                ########### PUBLIC KEY EXCHANGE MESSAGES HANDLED HERE, MESSAGE NUMBER = 0 (RESPONSE)
                 if message_no == '0':
                     server_logger.info('\n')
                     server_logger.info('\nPUBLIC KEY EXCHANGE BEGIN WITH (%s,%d)'%(address[0],address[1]))
                     nonce = msg['nonce']
-                    with open((config['data_path']+'DeviceSpecific/Temp/%s_public_key')%(str(address[1])),'wb') as f:
-                        f.write(msg['public_key_serialized'])
-                    response_msg = message_object.getPublicKeyMessage(device_object,to_port=address[1],nonce=nonce) 
+                    discard, to_public_key = loadKeyPairRSA(msg['public_key_serialized'],device_object.master_key)
+                    response_msg = message_object.getPublicKeyMessage(device_object,to_port=None,nonce=nonce,to_public_key=to_public_key) 
                     s.sendto(response_msg,address)
                     server_logger.info('\nPUBLIC KEY EXCHANGE COMPLETE WITH (%s,%d)'%(address[0],address[1]))
 
-                ########### INCOMING ASSOCIATION REQUEST HANDLED HERE, MESSAGE NUMBER = 1
+                ########### INCOMING ASSOCIATION REQUEST HANDLED HERE, MESSAGE NUMBER = 1 (RESPONSE)
                 elif message_no == '1':
                     server_logger.info('\n')
                     server_logger.info('\nASSOCIATION REQUEST FROM (%s,%d)'%(address[0],address[1]))
-                    nonce = msg['nonce']
                     association_msg = msg
+                    nonce = decryptRSA(device_object.private_key,association_msg['nonce'])
+                    discard, to_public_key = loadKeyPairRSA(association_msg['public_key_serialized'],device_object.master_key)
                     # if device is authenticated 
                     if device_object.verifyDeviceAssociation(association_msg['association_tx_receipt']):
                         server_logger.info('\nVERIFIED DEVICE ASSOCIATION FOR (%s,%d)'%(address[0],address[1]))
@@ -133,13 +126,8 @@ if device_object.master:
                             association_msg['future-master']
                         )
                         server_logger.info('\nADDED (%s,%d) TO GROUPTABLE'%(address[0],address[1]))
-                        response_msg = message_object.getAssociationResponseMssg(nonce)
+                        response_msg = message_object.getAssociationResponseMssg(device_object,nonce,to_public_key)
                         enc_reponse_msg = response_msg
-                        if isfile((config['data_path']+'DeviceSpecific/Temp/%s_public_key')%(str(address[1]))):
-                            with open((config['data_path']+'DeviceSpecific/Temp/%s_public_key')%(str(address[1])),'rb') as f:
-                                public_key_serialized = f.read()
-                                discard, to_public_key = loadKeyPairRSA(public_key_serialized,device_object.master_key)
-                                enc_reponse_msg = encryptRSA(to_public_key,response_msg)
                         s.sendto(enc_reponse_msg,address)
                         server_logger.info('\nASSOCIATION RESPONSE SENT TO (%s,%d)'%(address[0],address[1]))
                         server_logger.warn('\nASSOCIATION REQUEST COMPLETE WITH (%s,%d)'%(address[0],address[1]))
@@ -188,18 +176,21 @@ else:
                     s.sendto(msg,(public_ip,1111))
                     msg , address = s.recvfrom(1024)
                     msg = message_object.getMessage(msg)
-                    server_logger.info('\nPUBLIC KEY EXCHANGE WITH MASTER COMPLETE')
 
-                    if device_object.last_nonce[str(1111)] == msg['nonce']:
+                    # first check nonce of public key exchange
+                    if device_object.last_nonce[str(1111)] == decryptRSA(device_object.private_key,msg['nonce']):
+                        server_logger.info('\nPUBLIC KEY EXCHANGE WITH MASTER COMPLETE')
                         server_logger.info('\nINITIATING DEVICE ASSOCIATION REQUEST')
-                        association_msg = message_object.getAssociationRequestMssg(device_object,1111)
                         discard, to_public_key = loadKeyPairRSA(msg['public_key_serialized'],device_object.master_key)
-                        enc_association_msg = encryptRSA(to_public_key,association_msg)
-                        s.sendto(enc_association_msg,(public_ip,1111))
+                        association_msg = message_object.getAssociationRequestMssg(device_object,1111,to_public_key)
+                        s.sendto(association_msg,(public_ip,1111))
+
                         association_resp_msg , address = s.recvfrom(1024)
-                        association_resp_msg = decryptRSA(device_object.private_key,association_resp_msg)
                         association_resp_msg = message_object.getMessage(association_resp_msg)
-                        if device_object.verifyGroupCreation(association_resp_msg['group_creation_tx_receipt']):
+                        association_resp_msg['nonce'] = decryptRSA(device_object.private_key,association_resp_msg['nonce'])
+
+                        if association_resp_msg['nonce'] == device_object.last_nonce(str(1111)) \
+                        and device_object.verifyGroupCreation(association_resp_msg['group_creation_tx_receipt']):
                             server_logger.info('\nGROUPCREATION VERIFIED MASTER AUTHENTICATED')
                             group_table_df = association_resp_msg['group_table']
                             group_table_df.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')

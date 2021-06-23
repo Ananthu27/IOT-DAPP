@@ -9,7 +9,8 @@ from os.path import isfile
 
 ########## USER DEFINED FUNCTION IMPORTS
 from exceptions import PayloadExceedsUdpMtu
-from blockChain import getAbiAndBytecode, logExceptionsWrapper
+from blockChain import getAbiAndBytecode
+from crypto import encryptRSA
 
 ########## IMPORTS FOR LOGGING
 from logger import createLogger
@@ -67,12 +68,16 @@ class Message:
 
     ########## FUNCTION TO CREATE MESSAGE TO EXCHANGE PUBLIC KEY
     @logExceptionsWrapper
-    def getPublicKeyMessage(self,device_object,to_port=None,nonce=None):
+    def getPublicKeyMessage(self,device_object,to_port=None,to_public_key=None,nonce=None):
         
         # if nonce exist its a reply message and nonce need not be saved/recorded
         if to_port is not None and nonce is None:
             nonce = getTrueRandom()
             device_object.last_nonce[str(to_port)] = nonce
+
+        elif to_public_key is not None:
+            nonce = encryptRSA(to_public_key,str(nonce).encode())
+            
         msg = {
             'message_no' : '0',
             'nonce' : nonce,
@@ -85,8 +90,7 @@ class Message:
 
     ######### FUNCTION TO CREATE ASSOCIATION REQUEST MESSAGE
     @logExceptionsWrapper
-    def getAssociationRequestMssg(self,device_object,to_port):
-
+    def getAssociationRequestMssg(self,device_object,to_port,to_public_key):
         tx_receipt = None
         # check if association transaction is present
         if isfile(config['data_path']+'DeviceSpecific/Transaction_receipt/DeviceAssociationReceipt'):
@@ -95,17 +99,15 @@ class Message:
         
         nonce = getTrueRandom()
         device_object.last_nonce[str(to_port)] = nonce
-
         msg = {
             'message_no' : '1',
-            'nonce' : nonce,
+            'nonce' : encryptRSA(to_public_key,str(nonce).encode()),
             'device_name' : device_object.device_name,
             'public_key_serialized' : device_object.public_key_serialized,
             'future_master' : device_object.future_master,
             'association_tx_receipt' : tx_receipt
         }
         msg = pickle.dumps(msg)
-        
         if len(msg) >= (2**16-8):
             raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
         
@@ -113,7 +115,7 @@ class Message:
     
     ######### FUNCTION TO CREATE ASSOCIATION REQUEST MESSAGE
     @logExceptionsWrapper
-    def getAssociationResponseMssg(self,device_object,nonce):
+    def getAssociationResponseMssg(self,device_object,nonce,to_public_key):
         msg = None
         if device_object.master:
             if isfile(config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt') :
@@ -122,7 +124,7 @@ class Message:
                     group_table_df = device_object.retrieveGroupTable()
                     msg = {
                         'message_no' : '2',
-                        'nonce' : nonce,
+                        'nonce' : encryptRSA(to_public_key,str(nonce).encode()),
                         'group_creation_tx_receipt' : tx_receipt,
                         'group_table' : group_table_df
                     }
