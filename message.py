@@ -72,7 +72,7 @@ class Message:
         msg = {
             'message_no' : '0',
             'nonce' : nonce,
-            'public_key_serialised' : device_object.public_key_serialised
+            'public_key_serialized' : device_object.public_key_serialized
         }
         msg = pickle.dumps(msg)
         if len(msg) >= (2**16-8):
