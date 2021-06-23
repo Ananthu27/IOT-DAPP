@@ -91,6 +91,11 @@ if master:
                 ########### PUBLIC KEY EXCHANGE MESSAGES HANDLED HERE, MESSAGE NUMBER = 0
                 if message_no == 0:
                     nonce = msg['nonce']
+                    # with open((config['data_path']+'DeviceSpecific/Temp/%s_public_key')%(str(address[1])),'w') as f:
+                    #     f.write(msg['public_key_serialised'])
+                    print (msg)
+                    print ()
+                    print (address)
                     response_msg = getPublicKeyMessage(master_key=master_key,nonce=nonce)
                     s.sendto(msg,address)
         
@@ -116,7 +121,7 @@ else:
             print ('DEVICE ALREADY EXSIT ... EXITING')
             exit()
 
-    if not isfile(config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt'):
+    if not isfile(config['data_path']+'DeviceSpecific/Transaction_receipt/DeviceAssociationReceipt'):
         print ('IMPORTATN FILES ARE MISSING ... EXITING')
         exit()        
 

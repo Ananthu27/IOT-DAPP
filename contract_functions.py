@@ -97,6 +97,7 @@ def verifyGroupCreation(tx_receipt):
 ########## FUNCTION TO VERIFY DEVICE ASSOCIATION TO GROUP TRANSACTION RECEIPT
 def verifyDeviceAssociation(tx_receipt):
     try:
+        log = contract.events.DeviceAssociation().processLog(tx_receipt.logs[0])
         return True
     except Exception as e:
         return False
