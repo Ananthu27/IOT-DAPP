@@ -21,7 +21,7 @@ from device import Device
 ########## INPUT FOR SERVER 
 host = '127.0.0.1'
 master = True
-new_group = False
+new_group = True
 new_device = True
 future_master = True
 master_key = 'Em0C2Kv9pM'
@@ -123,7 +123,7 @@ if device_object.master:
                             address[1],
                             association_msg['device_name'],
                             association_msg['public_key_serialized'],
-                            association_msg['future-master']
+                            association_msg['future_master']
                         )
                         server_logger.info('\nADDED (%s,%d) TO GROUPTABLE'%(address[0],address[1]))
                         response_msg = message_object.getAssociationResponseMssg(device_object,nonce,to_public_key)
@@ -189,7 +189,7 @@ else:
                         association_resp_msg = message_object.getMessage(association_resp_msg)
                         association_resp_msg['nonce'] = decryptRSA(device_object.private_key,association_resp_msg['nonce'])
 
-                        if association_resp_msg['nonce'] == device_object.last_nonce(str(1111)) \
+                        if association_resp_msg['nonce'] == device_object.last_nonce[str(1111)] \
                         and device_object.verifyGroupCreation(association_resp_msg['group_creation_tx_receipt']):
                             server_logger.info('\nGROUPCREATION VERIFIED MASTER AUTHENTICATED')
                             group_table_df = association_resp_msg['group_table']
