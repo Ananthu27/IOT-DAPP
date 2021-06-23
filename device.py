@@ -78,7 +78,7 @@ class Device:
             group_table['TIMESTAMP'] = [datetime.now()]
             group_table['MPRECIDENCE'] = [0]
             group_table['LAST_PING'] = [datetime.now()]
-            group_table = group_table.set_index('DEVICE_NAME')
+            # group_table = group_table.set_index('DEVICE_NAME')
 
             group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
 
@@ -120,16 +120,19 @@ class Device:
                     device['LAST_PING'] = datetime.now()
                     result = False
                 except KeyError:
-                    group_table.loc[device_name]['IP'] = ip
-                    group_table.loc[device_name]['PORT'] = port
-                    # group_table.loc[device_name]['DEVICE_NAME'] = device_name
-                    group_table.loc[device_name]['PUB_KEY'] = pub_key
-                    group_table.loc[device_name]['TIMESTAMP'] = datetime.now()
+                    new_device = {
+                        'DEVICE_NAME':device_name,
+                        'IP':ip,
+                        'PORT':port,
+                        'PUB_KEY': pub_key,
+                        'TIMESTAMP':datetime.now(),
+                        'LAST_PING':datetime.now()
+                    }
                     if future_master:
-                        group_table.loc[device_name]['MPRECIDENCE'] = group_table['MPRECIDENCE'].max() + 1
+                        new_device['MPRECIDENCE'] = group_table['MPRECIDENCE'].max() + 1
                     else :
-                        group_table.loc[device_name]['MPRECIDENCE'] = -1
-                    group_table.loc[device_name]['LAST_PING'] = datetime.now()
+                        new_device['MPRECIDENCE'] = -1
+                    group_table = group_table.append(new_device,ignore_index=True)
                     result = True
                 finally:
                     group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
