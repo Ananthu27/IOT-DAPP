@@ -149,7 +149,7 @@ def getMessage(msg):
 ########## FUNCTION TO RECORD LAST NONCE
 @logExceptionsWrapper
 def storeNonce(port,nonce):
-    with open(config['data_path']+'DeviceSpecific/Device_data/last_nonce.json','r+') as f:
+    with open(config['data_path']+'DeviceSpecific/Device_data/last_nonce.json','w+') as f:
         last_nonce = load(f)
         last_nonce[port] = nonce
         dump(last_nonce,f) 
