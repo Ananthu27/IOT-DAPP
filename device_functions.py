@@ -148,18 +148,8 @@ def getMessage(msg):
 ########## FUNCTION TO RECORD LAST NONCE
 @logExceptionsWrapper
 def storeNonce(port,nonce):
-    last_nonce = None
-    if isfile(config['data_path']+'DeviceSpecific/Device_data/last_nonce.json'):
-        with open(config['data_path']+'DeviceSpecific/Device_data/last_nonce.json','r+') as f:
-            last_nonce = load(f)
-            last_nonce[port] = nonce
-            dump(last_nonce,f) 
-    else :
-        with open(config['data_path']+'DeviceSpecific/Device_data/last_nonce.json','w') as f:
-            last_nonce = {
-                port : nonce
-            }
-            dump(last_nonce,f)
+    with open(config['data_path']+'DeviceSpecific/Temp/%s_last_nonce'%(str(port)),'w') as f:
+        f.write(nonce)
 
 ########## FUNCTION TO CREATE MESSAGE TO EXCHANGE PUBLIC KEY
 @logExceptionsWrapper
