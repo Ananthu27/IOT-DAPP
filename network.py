@@ -5,7 +5,7 @@ from logger import createLogger
 from logging import INFO
 from functools import wraps
 
-crypto_logger = createLogger(name='Network',level=INFO,state='DEVELOPMENT')
+network_logger = createLogger(name='Network',level=INFO,state='DEVELOPMENT')
 
 ########## WRAPPER FOR LOGGER
 def logExceptionsWrapper(function):
@@ -15,7 +15,7 @@ def logExceptionsWrapper(function):
             return function(*args,**kwargs)
         except:
             print ('################# NETWORK ERROR ###############')
-            crypto_logger.exception('exception in network.py.%s'%(function.__name__))
+            network_logger.exception('exception in network.py.%s'%(function.__name__))
             print ('exception in network.py.%s'%(function.__name__))
             print ('################# NETWORK ERROR ###############')
     return logExceptions

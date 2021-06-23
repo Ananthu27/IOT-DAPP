@@ -14,7 +14,7 @@ from logger import createLogger
 from logging import INFO, log
 from functools import wraps
 
-crypto_logger = createLogger(name='Device',level=INFO,state='DEVELOPMENT')
+device_logger = createLogger(name='Device',level=INFO,state='DEVELOPMENT')
 
 ########## WRAPPER FOR LOGGER
 def logExceptionsWrapper(function):
@@ -24,7 +24,7 @@ def logExceptionsWrapper(function):
             return function(*args,**kwargs)
         except:
             print ('################# DEVICE ERROR ###############')
-            crypto_logger.exception('exception in device_functions.py.%s'%(function.__name__))
+            device_logger.exception('exception in device_functions.py.%s'%(function.__name__))
             print ('exception in device_functions.py.%s'%(function.__name__))
             print ('################# DEVICE ERROR ###############')
     return logExceptions
