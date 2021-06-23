@@ -90,7 +90,7 @@ if device_object.master:
             while True:
 
                 # getting incoming message and message number
-                msg, address = s.recvfrom(1024)
+                msg, address = s.recvfrom(2**16)
                 msg = message_object.getMessage(msg)
                 message_no = msg['message_no']
                 server_logger.info('\nMESSAGE NO : %s FROM (%s,%d)'%(message_no,address[0],address[1]))
@@ -130,10 +130,10 @@ if device_object.master:
                         enc_reponse_msg = response_msg
                         s.sendto(enc_reponse_msg,address)
                         server_logger.info('\nASSOCIATION RESPONSE SENT TO (%s,%d)'%(address[0],address[1]))
-                        server_logger.warn('\nASSOCIATION REQUEST COMPLETE WITH (%s,%d)'%(address[0],address[1]))
+                        server_logger.warning('\nASSOCIATION REQUEST COMPLETE WITH (%s,%d)'%(address[0],address[1]))
                     else:
-                        server_logger.warn('\nSUSPECT (%s,%d)'%(address[0],address[1]))
-                        server_logger.warn('\nASSOCIATION REQUEST INCOMPLETE WITH (%s,%d)'%(address[0],address[1]))
+                        server_logger.warning('\nSUSPECT (%s,%d)'%(address[0],address[1]))
+                        server_logger.warning('\nASSOCIATION REQUEST INCOMPLETE WITH (%s,%d)'%(address[0],address[1]))
         
         except OSError:
             server_logger.info('\nPort : %d taken'%(port))
@@ -174,7 +174,7 @@ else:
                     server_logger.info('\nINITIATING PUBLIC KEY EXCHANGE WITH MASTER')
                     msg = message_object.getPublicKeyMessage(device_object,to_port='1111',nonce=None)
                     s.sendto(msg,(public_ip,1111))
-                    msg , address = s.recvfrom(1024)
+                    msg , address = s.recvfrom(2**16)
                     msg = message_object.getMessage(msg)
 
                     # first check nonce of public key exchange
@@ -185,7 +185,7 @@ else:
                         association_msg = message_object.getAssociationRequestMssg(device_object,1111,to_public_key)
                         s.sendto(association_msg,(public_ip,1111))
 
-                        association_resp_msg , address = s.recvfrom(1024)
+                        association_resp_msg , address = s.recvfrom(2**16)
                         association_resp_msg = message_object.getMessage(association_resp_msg)
                         association_resp_msg['nonce'] = decryptRSA(device_object.private_key,association_resp_msg['nonce'])
 
