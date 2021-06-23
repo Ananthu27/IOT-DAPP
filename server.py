@@ -12,9 +12,10 @@ from os.path import isfile
 from network import getPorts, getPublicPirvateIp
 from crypto import retrieveKeyPairRsa
 from blockChain import getAbiAndBytecode
-from device_functions import storeMyDevice
-from device_functions import getPublicKeyMessage, getMessage
-from contract_functions import createNewGroup, createNewDevice
+
+########## USER DEFINED CLASS IMPORTS
+from message import Message
+from device import Device
 
 ########## INPUT FOR SERVER 
 host = '127.0.0.1'
@@ -42,25 +43,18 @@ else :
             port = i
             break
 
-########## WRITING NEW DEVICE DATA HERE
-storeMyDevice(port,device_name)
+########## CREATING OBJECTS HERE
+device_object = Device(device_name,port,master_key,master=master,future_master=True)
+message_object = Message()
 
-########## SETTING UP CONNECTION TO BLOCKCHAIN
-ganache_url = config['ganache_endpoint']
-bcc = Web3(Web3.HTTPProvider(ganache_url))
-bcc.eth.default_account = bcc.eth.accounts[int(config['default_subsciber_accout'])]
-abi, discard = getAbiAndBytecode(config['main_contract_path'])
-contract = bcc.eth.contract(address=config['address'],abi=abi)
-
-########## LOADING KEYS HERE
-private_key_serialized, public_key_serialized = retrieveKeyPairRsa(master_key,serialize=True)
 
 ########## THIS IS THE MAIN FRAME
+
 # if this device is a master device
-if master:
+if device_object.master:
     
     if new_group:
-        new_group_created = createNewGroup(master_key,public_key_serialized)
+        new_group_created = device_object.createNewGroup()
         # if new group cannot be created
         if not new_group_created:
             print ('GROUP ALREAD EXIST ... EXITING')
@@ -77,27 +71,32 @@ if master:
     # continue infinite while loop
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         try:
-            s.bind((host, port))
+            s.bind(('', port))
             print ('MASTER RUNNING AT %s:%s'%(host,str(port)))
             while True:
+                # message , address = s.recvfrom(1024)
+                # message = message.decode()
+                # print ('recevied :',message,address)
+                # ########### ANSWER DIFFERNET MESSAGES HERE
+                # s.sendto(('echo recived : '+message).encode(),address)
 
                 # getting incoming message and message number
                 msg, address = s.recvfrom(1024)
-                msg = getMessage(msg)
+                msg = message_object.getMessage(msg)
+                print (msg)
                 message_no = msg['message_no']
                 
-                ########### ANSWER DIFFERNET MESSAGES HERE
+                # ########### ANSWER DIFFERNET MESSAGES HERE
                 
-                ########### PUBLIC KEY EXCHANGE MESSAGES HANDLED HERE, MESSAGE NUMBER = 0
-                if message_no == 0:
+                # ########### PUBLIC KEY EXCHANGE MESSAGES HANDLED HERE, MESSAGE NUMBER = 0
+                if message_no == '0':
+                    print ('here')
                     nonce = msg['nonce']
                     # with open((config['data_path']+'DeviceSpecific/Temp/%s_public_key')%(str(address[1])),'w') as f:
                     #     f.write(msg['public_key_serialised'])
                     print (msg)
-                    print ()
-                    print (address)
-                    response_msg = getPublicKeyMessage(master_key=master_key,nonce=nonce)
-                    s.sendto(msg,address)
+                    response_msg = message_object.getPublicKeyMessage(device_object,to_port=address[1],nonce=nonce) 
+                    s.sendto(response_msg,address)
         
         except OSError:
             print ('Port :',port,'taken')
@@ -116,7 +115,7 @@ if master:
 else:
     # check add device here
     if new_device:
-        new_device_created = createNewDevice(master_key,public_key_serialized,host,future_master)
+        new_device_created = device_object.createNewDevice()
         if not new_device_created:
             print ('DEVICE ALREADY EXSIT ... EXITING')
             exit()
@@ -128,14 +127,20 @@ else:
     # continue with while loop here
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         try:
-            s.bind((host, port))
+            s.bind(('', port))
             print ('DEVICE RUNNING AT %s:%s'%(host,str(port)))
             while True:
+                # s.sendto('test message from client 2222'.encode(),(private_ip, 1111))
+                # message, address = s.recvfrom(1024)
+                # print('server replied with :', message, address)
+                # s.close()
+                # break
+
                 if new_device:
-                    msg = getPublicKeyMessage(master_key,to_port='1111',nonce=None)
+                    msg = message_object.getPublicKeyMessage(device_object,to_port='1111',nonce=None)
                     s.sendto(msg,(public_ip,1111))
                     msg , address = s.recvfrom(1024)
-                    msg = getMessage(msg)
+                    msg = message_object.getMessage(msg)
                     # verify last nonce here
                     print(msg,address)
                     # continue with association request
