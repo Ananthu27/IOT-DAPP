@@ -70,6 +70,7 @@ class Message:
     @logExceptionsWrapper
     def getPublicKeyMessage(self,device_object,to_port=None,to_public_key=None,nonce=None):
         
+        nonce = None
         # if nonce exist its a reply message and nonce need not be saved/recorded
         if to_port is not None and nonce is None:
             nonce = getTrueRandom()
@@ -77,7 +78,7 @@ class Message:
 
         elif to_public_key is not None:
             nonce = encryptRSA(to_public_key,str(nonce).encode())
-            
+
         msg = {
             'message_no' : '0',
             'nonce' : nonce,
