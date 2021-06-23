@@ -5,6 +5,7 @@ from web3 import Web3
 import json
 import pickle
 from urllib.request import urlopen
+from os.path import isfile
 
 ########## USER DEFINED FUNCTION IMPORTS
 from exceptions import PayloadExceedsUdpMtu
@@ -79,18 +80,45 @@ class Message:
             raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
         return msg
 
-    ########## FUNCTION TO CREATE ASSOCIATION REQUEST MESSAGE
-    # @logExceptionsWrapper
-    # def getAssociationRequestMssg():
-    #     msg = None
-    #     # check if association transaction is present
-    #     if 'GroupCreationReceipt' in listdir(config['data_path']+'DeviceSpecific/Transaction_receipt/'):
-    #         with open (config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt','rb') as f:
-    #             tx_receipt = pickle.load(f)
-    #             msg = {
-    #                 'message_no' : '1',
-    #                 'nonce' : getTrueRandom(10),
-    #                 'association_tx_receipt' : tx_receipt
-    #             }
-    #             msg = pickle.dumps(msg)
-    #     return msg
+    ######### FUNCTION TO CREATE ASSOCIATION REQUEST MESSAGE
+    @logExceptionsWrapper
+    def getAssociationRequestMssg(self,device_object,to_port):
+        msg = None
+        # check if association transaction is present
+        if isfile(config['data_path']+'DeviceSpecific/Transaction_receipt/DeviceAssociationReceipt'):
+            with open (config['data_path']+'DeviceSpecific/Transaction_receipt/DeviceAssociationReceipt','rb') as f:
+                tx_receipt = pickle.load(f)
+                nonce = getTrueRandom()
+                device_object.last_nonce[to_port] = nonce
+                msg = {
+                    'message_no' : '1',
+                    'nonce' : nonce,
+                    'device_name' : device_object.device_name,
+                    'public_key_serialized' : device_object.public_key_serialized,
+                    'future_master' : device_object.future_master,
+                    'association_tx_receipt' : tx_receipt
+                }
+            msg = pickle.dumps(msg)
+            if len(msg) >= (2**16-8):
+                raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
+        return msg
+    
+    ######### FUNCTION TO CREATE ASSOCIATION REQUEST MESSAGE
+    @logExceptionsWrapper
+    def getAssociationResponseMssg(self,device_object,nonce):
+        msg = None
+        if device_object.master:
+            if isfile(config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt') :
+                with open (config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt','rb') as f:
+                    tx_receipt = pickle.load(f)
+                    group_table_df = device_object.retrieveGroupTable()
+                    msg = {
+                        'message_no' : '2',
+                        'nonce' : nonce,
+                        'group_creation_tx_receipt' : tx_receipt,
+                        'group_table' : group_table_df
+                    }
+                msg = pickle.dumps(msg)
+                if len(msg) >= (2**16-8):
+                    raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
+        return msg

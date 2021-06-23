@@ -109,7 +109,7 @@ class Device:
 
     ########## FUNCITON TO ADD DEVICE TO GROUP TABLE
     @logExceptionsWrapper
-    def addDeviceToGroupTable(self,ip, port,device_name,pub_key,master=False):
+    def addDeviceToGroupTable(self,ip, port,device_name,pub_key,future_master=False):
         result = False
         if self.master:
             group_table = self.retrieveGroupTable()
@@ -125,7 +125,7 @@ class Device:
                     # group_table.loc[device_name]['DEVICE_NAME'] = device_name
                     group_table.loc[device_name]['PUB_KEY'] = pub_key
                     group_table.loc[device_name]['TIMESTAMP'] = datetime.now()
-                    if master:
+                    if future_master:
                         group_table.loc[device_name]['MPRECIDENCE'] = group_table['MPRECIDENCE'].max() + 1
                     else :
                         group_table.loc[device_name]['MPRECIDENCE'] = -1
