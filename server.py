@@ -48,7 +48,7 @@ storeMyDevice(port,device_name)
 ########## SETTING UP CONNECTION TO BLOCKCHAIN
 ganache_url = config['ganache_endpoint']
 bcc = Web3(Web3.HTTPProvider(ganache_url))
-bcc.eth.default_account = bcc.eth.accounts[config['default_subsciber_accout']]
+bcc.eth.default_account = bcc.eth.accounts[int(config['default_subsciber_accout'])]
 abi, discard = getAbiAndBytecode(config['main_contract_path'])
 contract = bcc.eth.contract(address=config['address'],abi=abi)
 
