@@ -59,7 +59,7 @@ class Device:
         self.master = master
         self.future_master = master if master else future_master
         self.private_key, self.public_key = retrieveKeyPairRsa(self.master_key)
-        self.private_key_serialized, self.public_key_serialised = retrieveKeyPairRsa(self.master_key,serialize=True)
+        self.private_key_serialized, self.public_key_serialized = retrieveKeyPairRsa(self.master_key,serialize=True)
         self.last_nonce = {}
 
     ########## FUNCTION TO CREATE GROUP TABLE
@@ -148,7 +148,7 @@ class Device:
             group_creation_possible = contract.functions.addGroup(
                 self.master_key,
                 self.device_name,
-                self.public_key_serialised.decode(),
+                self.public_key_serialized.decode(),
                 ('%s:%s:%s:%s')%(public_ip,private_ip,host,self.device_name),
                 10
             ).call(tx)
