@@ -69,21 +69,20 @@ class Message:
     ########## FUNCTION TO CREATE MESSAGE TO EXCHANGE PUBLIC KEY
     @logExceptionsWrapper
     def getPublicKeyMessage(self,device_object,to_port=None,to_public_key=None,nonce=None):
-        
-        nonce = None
         # if nonce exist its a reply message and nonce need not be saved/recorded
         if to_port is not None and nonce is None:
             nonce = getTrueRandom()
             device_object.last_nonce[str(to_port)] = nonce
 
-        elif to_public_key is not None:
-            nonce = encryptRSA(to_public_key,str(nonce).encode())
+        if to_public_key is not None and nonce is not None:
+            nonce = encryptRSA(to_public_key,nonce)
 
         msg = {
             'message_no' : '0',
             'nonce' : nonce,
             'public_key_serialized' : device_object.public_key_serialized
         }
+        
         msg = pickle.dumps(msg)
         if len(msg) >= (2**16-8):
             raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
@@ -102,7 +101,7 @@ class Message:
         device_object.last_nonce[str(to_port)] = nonce
         msg = {
             'message_no' : '1',
-            'nonce' : encryptRSA(to_public_key,str(nonce).encode()),
+            'nonce' : encryptRSA(to_public_key,nonce),
             'device_name' : device_object.device_name,
             'public_key_serialized' : device_object.public_key_serialized,
             'future_master' : device_object.future_master,
@@ -125,7 +124,7 @@ class Message:
                     group_table_df = device_object.retrieveGroupTable()
                     msg = {
                         'message_no' : '2',
-                        'nonce' : encryptRSA(to_public_key,str(nonce).encode()),
+                        'nonce' : encryptRSA(to_public_key,nonce),
                         'group_creation_tx_receipt' : tx_receipt,
                         'group_table' : group_table_df
                     }

@@ -130,6 +130,7 @@ def decryptRSA(private_key,ciphertext):
                 label=None
             )
         )
+        plaintext = plaintext.decode()
     except Exception as e:
         ########### Log here
         pass
