@@ -4,7 +4,7 @@ pragma solidity >=0.7.0 <0.9.0;
 
 contract Storage {
 
-    bool internal busy = false;
+    bytes32 test;
     address payable deploy_wallet;
 
     // STRUCTURE TO STORE DEVICE INFORMATION
@@ -24,14 +24,15 @@ contract Storage {
         address owner;
         device_info master_device;
         string[] masters;
-        uint256 max_size;
+        uint8 max_size;
         uint256 tokens;
         string[] followers;
     }
 
-    struct message {
-        string from_device;
-        string to_device;
+    struct message_info {
+        bool exist;
+        string from_device_name;
+        string to_device_name;
         string message;
     }
 
@@ -46,11 +47,22 @@ contract Storage {
         string device_name
     );
 
+    event MessageTransaction(
+        string message_id,
+        string from_device_name,
+        string to_device_name
+    );
+
     // MAPPING CONTAINTING ALL GROUP DETAILS, CAN ONLY BE ACCESSED BY GROUP MEMBERS 
     mapping(string => group_info) private groups;
 
     // MAPPING CONTAINING ALL DEVICE DETAILS, CAN BE ACCESSED BY AYONE WHO KNOWS DEVICE NAME
     mapping(string => device_info) public devices;
+
+    // MAPPING CONTAINING ALL MESSAGE DETAILS, 
+    // CAN BE ACCESSED BY ANYONE WHOKNOW THE MESSAGE-NO AND IS AUTHENTIC MEMBER OF GROUP
+    // MESSAGE CONFIDENTIALITY IS LEFT TO SENDER-RECIVER CRYPTO CHOICE
+    mapping(string => message_info) private messages;
 
     // FUNCTION TO CHECK IF GROUP ALREADY EXIXTS
     function groupExists(string memory secret_key) public view returns (bool){
@@ -85,7 +97,7 @@ contract Storage {
         string memory master_name,
         string memory master_public_key,
         string memory master_public_address,
-        uint256 follower_count
+        uint8 follower_count
     ) public payable returns(bool) {
 
         if(!groupExists(secret_key) && msg.value>=10**18){
@@ -264,5 +276,62 @@ contract Storage {
 
         }
         return false;
+    }
+
+    // FUNCTION TO CHECK IF MESSAGE EXIXTS
+    function messageExist(string memory message_id) public view returns (bool){
+        return (messages[message_id].exist);
+    }
+
+    // FUNCITON TO ADD MESSAGE, token cost 1
+    function addMessage(
+        string memory secret_key,
+        string memory from_device_name,
+        string memory to_device_name,
+        string memory message_id,
+        string memory data_message
+    )public returns (bool){
+        
+        // check if group exists and both devices are authentic members
+        if(
+            groupExists(secret_key) &&
+            followerExists(secret_key, from_device_name)>0 &&
+            followerExists(secret_key, to_device_name)>0 &&
+            !messageExist(message_id)
+        ){
+            // create a new message
+            message_info memory new_message;
+            new_message.exist = true;
+            new_message.from_device_name = from_device_name;
+            new_message.to_device_name = to_device_name;
+            new_message.message = data_message;
+
+            // add message and collect token fee
+            messages[message_id] = new_message;
+            groups[secret_key].tokens -= 1;
+            // emit event here
+            emit MessageTransaction(message_id, from_device_name, to_device_name);
+
+            return true;
+        }
+        return false;
+    }
+
+    // FUNCTION TO RETRIEVE ADDED MESSAGE
+    function retrieveMessage(
+        string memory secret_key,
+        string memory _device_name,
+        string memory _message_id
+    )public view returns (string memory){
+
+        if(
+            groupExists(secret_key) &&
+            followerExists(secret_key, _device_name)>0 &&
+            messageExist(_message_id) &&
+            keccak256(bytes(messages[_message_id].to_device_name)) == keccak256(bytes(_device_name))
+        ){
+            return messages[_message_id].message;
+        }
+        return '';
     }
 }
