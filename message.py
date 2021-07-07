@@ -9,7 +9,7 @@ from os.path import isfile
 
 ########## USER DEFINED FUNCTION IMPORTS
 from exceptions import PayloadExceedsUdpMtu
-from blockChain import getAbiAndBytecode
+from blockChain import getAbiAndBytecode, logExceptionsWrapper
 from crypto import encryptRSA
 
 ########## IMPORTS FOR LOGGING
@@ -88,6 +88,35 @@ class Message:
             raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
         return msg
 
+    ######### FUNCTION TO CREATE PING/ALIVE MESSAGE
+    @logExceptionsWrapper
+    def getPingMessage(self,device_object,to_port,to_public_key):
+        nonce = getTrueRandom()
+        device_object.last_nonce[str(to_port)] = nonce
+        msg = {
+            'nonce' : encryptRSA(to_public_key,nonce),
+            'message_no' : '3',
+            'device_name' : device_object.device_name
+        }            
+        msg = pickle.dumps(msg)
+        if len(msg) >= (2**16-8):
+            raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
+        return msg
+
+    ######### FUNCTION TO CREATE PING/ALIVE RESPONSE MESSAGE
+    @logExceptionsWrapper
+    def getPingResponseMessage(self,device_object,nonce,to_public_key):
+        if device_object.master:
+            msg = {
+                'nonce' : encryptRSA(to_public_key,nonce),
+                'message_no' : '4',
+                'group_table' : device_object.retrieveGroupTable()
+            }            
+            msg = pickle.dumps(msg)
+            if len(msg) >= (2**16-8):
+                raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
+            return msg
+
     ######### FUNCTION TO CREATE ASSOCIATION REQUEST MESSAGE
     @logExceptionsWrapper
     def getAssociationRequestMssg(self,device_object,to_port,to_public_key):
@@ -131,4 +160,16 @@ class Message:
                 msg = pickle.dumps(msg)
                 if len(msg) >= (2**16-8):
                     raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
+        return msg
+
+    ######### FUNCTION TO SEND MESSAGE TRANSACTION PING
+    @logExceptionsWrapper
+    def getMessageTransactionPingMssg(self,device_object,tx_receipt):
+        msg = {
+            'message_no' : '5',
+            'message_tx_eceipt' : tx_receipt
+        }
+        msg = pickle.dumps(msg)
+        if len(msg) >= (2**16-8):
+            raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
         return msg
