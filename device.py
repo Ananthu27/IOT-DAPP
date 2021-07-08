@@ -2,12 +2,13 @@ from blockChain import logExceptionsWrapper
 import pandas as pd
 from network import getPublicPirvateIp
 from datetime import datetime
-from crypto import retrieveKeyPairRsa
+from crypto import decryptRSA, encryptRSA, loadKeyPairRSA, retrieveKeyPairRsa
 import json 
-from os import listdir
+from os import listdir, rename
 from os.path import isfile
 import pickle
 from crypto import retrieveKeyPairRsa
+from random import random
 
 config = None
 with open('config.json','r') as f:
@@ -51,6 +52,7 @@ class Device:
                 print ('################# DEVICE ERROR ###############')
         return logExceptions
 
+    ########## CONSTRUCTOR
     @logExceptionsWrapper
     def __init__(self,device_name,port,master_key,master=False,future_master=False):
         self.device_name = device_name
@@ -61,6 +63,8 @@ class Device:
         self.private_key, self.public_key = retrieveKeyPairRsa(self.master_key)
         self.private_key_serialized, self.public_key_serialized = retrieveKeyPairRsa(self.master_key,serialize=True)
         self.last_nonce = {}
+
+    ############################## FOLLOWING ARE FUNCTION ON LOCAL FILES ########################################
 
     ########## FUNCTION TO CREATE GROUP TABLE
     @logExceptionsWrapper
@@ -139,7 +143,9 @@ class Device:
 
         return result
 
-    ########## FUNCITON TO CREATE A NEW GROUP
+    ############################## FOLLOWING ARE FUNCTION ON THE BLOCKCHAIN ##############################
+
+    ########## FUNCITON TO CREATE A NEW GROUP ONTO THE BLOCKCHIAN
     @logExceptionsWrapper
     def createNewGroup(self,host = '127.0.0.1'):
         if self.master :
@@ -176,7 +182,16 @@ class Device:
                 return True
         return False
 
-    ########## FUNCTION TO CREATE A NEW DEVICE
+    ########## FUNCTION TO VERIFY GROUP CREATION TRNASACTION RECEIPT
+    @logExceptionsWrapper
+    def verifyGroupCreation(self,tx_receipt):
+        try:
+            log = contract.events.GroupCreation().processLog(tx_receipt.logs[0])
+            return True
+        except Exception as e:
+            return False
+
+    ########## FUNCTION TO CREATE A NEW DEVICE, ONTO THE BLOCKCHAIN
     @logExceptionsWrapper
     def createNewDevice(self,host = '127.0.0.1'):
 
@@ -206,16 +221,7 @@ class Device:
             return True
         return False 
 
-    ########## FUNCTION TO VERIFY GROUP CREATION TRNASACTION RECEIPT
-    @logExceptionsWrapper
-    def verifyGroupCreation(self,tx_receipt):
-        try:
-            log = contract.events.GroupCreation().processLog(tx_receipt.logs[0])
-            return True
-        except Exception as e:
-            return False
-
-    ########## FUNCTION TO VERIFY DEVICE ASSOCIATION TO GROUP TRANSACTION RECEIPT
+    ########## FUNCTION TO VERIFY DEVICE ASSOCIATION TRANSACTION RECEIPT
     @logExceptionsWrapper
     def verifyDeviceAssociation(self,tx_receipt):
         try:
@@ -223,3 +229,110 @@ class Device:
             return True
         except Exception as e:
             return False
+
+    ######### FUNCTION TO ADD DATA MESSAGE TO BLOCKCHAIN
+    @logExceptionsWrapper
+    def addMessage(self,messageFileName):
+        
+        if isfile(messageFileName):
+            msg = None
+            with open(messageFileName) as f:
+                msg = json.load(f)
+
+            #check if to_device exist and get corresponding public key from group table
+            group_table_df = self.retrieveGroupTable()
+
+            try :
+                to_device = group_table_df.loc[msg['to_device_name']]
+
+                message_id = str(random())
+                to_public_key = to_device['PUB_KEY']
+                discard, to_public_key = loadKeyPairRSA(to_public_key,self.master_key)
+                en_msg_data = encryptRSA(to_public_key,msg['data_message'])
+
+                # converting encrypted to string without affecting encoding
+                en_msg_data = list(en_msg_data)
+                en_msg_data = [str(item) for item in en_msg_data]
+                en_msg_data = '-'.join(en_msg_data)
+
+                valid_transaction = contract.functions.addMessage(
+                    self.master_key,
+                    self.device_name,
+                    msg['to_device_name'],
+                    message_id,
+                    en_msg_data    
+                ).call()
+
+                if valid_transaction:
+                    tx_hash = contract.functions.addMessage(
+                        self.master_key,
+                        self.device_name,
+                        msg['to_device_name'],
+                        message_id,
+                        en_msg_data    
+                    ).transact()
+                    msg['tx_receipt']  = bcc.eth.wait_for_transaction_receipt(tx_hash)
+                    msg['port'] = to_device['PORT']
+                    msg['message_id'] = message_id
+                    with open(messageFileName,'w') as f:
+                        json.dump(msg,fp=f,indent=4)
+                    rename(messageFileName,messageFileName.replace('.pending','.pending.ping'))
+
+            except KeyError:
+                device_logger.warning('UNKNOW DEVICE : '+msg['to_device_name'])
+
+    ########## FUNCTION TO MESSAGE TRANSACTION RECEIPT
+    @logExceptionsWrapper
+    def verifyMessageTransaction(self,tx_receipt):
+        try:
+            log = contract.events.MessageTransaction().processLog(tx_receipt.logs[0])
+            return True
+        except Exception as e:
+            return False
+
+    ######### FUNCTION TO READ DATA MESSAGE FROM BLOCKCHAIN
+    @logExceptionsWrapper
+    def getMessage(self,msg,port):
+        from_device_name = contract.functions.retrieveMessageFromDevice(
+            self.master_key,
+            self.device_name,
+            msg['message_id']
+        ).call()
+
+        # reject on duplicate identity
+        group_table_df = self.retrieveGroupTable()
+        try : 
+            from_device = group_table_df.loc[from_device_name]
+            if port != from_device['PORT']:
+                return None
+        except :
+            return None
+
+        # get data and store in inbox
+        cipher_text = contract.functions.retrieveMessageData(
+            self.master_key,
+            self.device_name,
+            msg['message_id']
+        ).call()
+
+        cipher_text = cipher_text.split('-')
+        cipher_text = [int(item) for item in cipher_text]
+        cipher_text = bytes(cipher_text)
+        data_message = decryptRSA(self.private_key,cipher_text)
+
+        # write and return incoming message 
+        write_msg = {
+            'message_id' : msg['message_id'],
+            'from_device_name' : from_device_name,
+            'tx_receipt' : msg['message_tx_eceipt'],
+            'data_message' : data_message
+        }
+        with open(config['data_path']+'DeviceSpecific/Inbox/%s.json'%(msg['message_id']),'w') as f:
+            from_device = group_table_df.loc[from_device_name]
+            json.dump(
+                write_msg,
+                fp=f,
+                indent=5
+            )
+
+        return write_msg

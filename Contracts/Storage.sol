@@ -317,8 +317,8 @@ contract Storage {
         return false;
     }
 
-    // FUNCTION TO RETRIEVE ADDED MESSAGE
-    function retrieveMessage(
+    // FUNCTION TO RETRIEVE ADDED MESSAGE DATA
+    function retrieveMessageData(
         string memory secret_key,
         string memory _device_name,
         string memory _message_id
@@ -331,6 +331,24 @@ contract Storage {
             keccak256(bytes(messages[_message_id].to_device_name)) == keccak256(bytes(_device_name))
         ){
             return messages[_message_id].message;
+        }
+        return '';
+    }
+
+    // FUNCTION TO RETRIEVE ADDED MESSAGE FROM DEVICE NAME
+    function retrieveMessageFromDevice(
+        string memory secret_key,
+        string memory _device_name,
+        string memory _message_id
+    )public view returns (string memory){
+
+        if(
+            groupExists(secret_key) &&
+            followerExists(secret_key, _device_name)>0 &&
+            messageExist(_message_id) &&
+            keccak256(bytes(messages[_message_id].to_device_name)) == keccak256(bytes(_device_name))
+        ){
+            return messages[_message_id].from_device_name;
         }
         return '';
     }

@@ -164,10 +164,11 @@ class Message:
 
     ######### FUNCTION TO SEND MESSAGE TRANSACTION PING
     @logExceptionsWrapper
-    def getMessageTransactionPingMssg(self,device_object,tx_receipt):
+    def getMessageTransactionPingMssg(self,device_object,tx_receipt,message_id):
         msg = {
             'message_no' : '5',
-            'message_tx_eceipt' : tx_receipt
+            'message_tx_eceipt' : tx_receipt,
+            'message_id' : message_id
         }
         msg = pickle.dumps(msg)
         if len(msg) >= (2**16-8):

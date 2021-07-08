@@ -93,4 +93,4 @@ else:
         exit()        
 
     # continue with while loop here
-    followerLoop(device_object,port,server_logger)
+    followerLoop(device_object,port,server_logger,new_device)

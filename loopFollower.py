@@ -1,13 +1,16 @@
 ######## GENERAL IMPORTS
-from logging import Logger
 import socket 
 import traceback
 import json
+from os import listdir
+from time import sleep
 
 ######## USERDEFIED FUNCTIONS/CLASSES/OBJECTS IMPORT
+from logging import Logger
 from message import Message
 from network import getPublicPirvateIp
 from crypto import decryptRSA, loadKeyPairRSA
+from random import choice
 
 message_object = Message()
 host = ''
@@ -18,16 +21,17 @@ config = None
 with open('config.json') as f:
     config = json.load(f)
 
-def follower(device_object,port,logger):
+def follower(device_object,port,logger,new_device=False):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         try:
+            s.settimeout(30)
             s.bind(('', port))
             logger.info('\nDEVICE RUNNING AT %s:%s'%(host,str(port)))
 
             while True:
 
+                ######## CREATION OF NEW DEVICE HERE
                 if new_device:
-
                     logger.info('\n')
                     logger.info('\nINITIATING PUBLIC KEY EXCHANGE WITH MASTER')
                     msg = message_object.getPublicKeyMessage(device_object,to_port='1111',nonce=None)
@@ -56,14 +60,58 @@ def follower(device_object,port,logger):
                             logger.info('\nGROUPTABLE UPDATED')
                         
                         else:
-                            logger.info('\nSUSPECT MASTER',address)
+                            logger.info('\nSUSPECT MASTER (%s,%d)'%(address[0],address[1]))
                             logger.info('\nDEVICE ASSOSICATION INCOMPLETE')
                     
                     new_device = False
 
-                #ping master
-                #check outbox
-                #check inbox (5second while)
+                ######## PING MASTER HERE 
+
+                ######## CHECKING OUPBOX HERE
+                temp = listdir(config['data_path']+'DeviceSpecific/Outbox')
+                if len(temp):
+                    outbox = []
+                    for item in temp:
+                        if item.endswith('.pending.json'):
+                            outbox.append(item)
+
+                    if len(outbox):
+                        for messageName in outbox:
+                            device_object.addMessage(messageName)
+                        del outbox
+
+                    temp = listdir(config['data_path']+'DeviceSpecific/Outbox')
+                    ping = []
+                    for item in temp:
+                        if item.endswith('.pending.ping.json'):
+                            ping.append(item)
+                    
+                    if len(ping):
+                        # ping a random transaction, sleep and exit
+                        messageName = choice(ping)
+                        msg_info = None
+                        with open(messageName,'r') as f:
+                            msg_info = json.load(f)
+                        msg = message_object.getMessageTransactionPingMssg(
+                            device_object,
+                            msg_info['tx_receipt'],
+                            msg_info['message_id']
+                        )
+                        s.sendto(msg,(public_ip,msg_info['port']))
+                        sleep(5)
+
+                ######## LOOP FOR INCOMING MESSAGES UNTIL TIMEOUT
+                msg, address = s.recvfrom(2**16)
+                msg = message_object.getMessage(msg)
+                message_no = msg['message_no']
+                logger.info('\nMESSAGE NO : %s FROM (%s,%d)'%(message_no,address[0],address[1]))
+
+                ######## ANSWER DIFFERNET MESSAGES HERE
+
+                ######## DATA_MSG TRANACTION PING MESSAGE HANDLED HERE, MESSAGE NUMBER = 0 (RESPONSE)
+                if message_no == '5':
+                    if device_object.verifyMessageTransaction(msg['tx_receipt']):
+                        device_object.getMessage(msg,address[1])
 
         except socket.timeout:
             Logger.warning('FOLLOWER TIMEOUT.')
