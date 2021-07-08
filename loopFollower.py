@@ -4,6 +4,7 @@ import traceback
 import json
 from os import listdir
 from time import sleep
+import pickle
 
 ######## USERDEFIED FUNCTIONS/CLASSES/OBJECTS IMPORT
 from logging import Logger
@@ -57,6 +58,8 @@ def follower(device_object,port,logger,new_device=False):
                             logger.info('\nGROUPCREATION VERIFIED MASTER AUTHENTICATED')
                             group_table_df = association_resp_msg['group_table']
                             group_table_df.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
+                            with open(config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt','wb') as f:
+                                pickle.dump(association_resp_msg['group_creation_tx_receipt'],f)
                             logger.info('\nGROUPTABLE UPDATED')
                         
                         else:
