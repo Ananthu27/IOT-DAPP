@@ -108,7 +108,7 @@ def follower(device_object,port,logger,new_device=False):
 
                 ######## ANSWER DIFFERNET MESSAGES HERE
 
-                ######## DATA_MSG TRANACTION PING MESSAGE HANDLED HERE, MESSAGE NUMBER = 0 (RESPONSE)
+                ######## DATA_MSG TRANACTION PING MESSAGE HANDLED HERE, MESSAGE NUMBER = 5
                 if message_no == '5':
                     if device_object.verifyMessageTransaction(msg['tx_receipt']):
                         device_object.getMessage(msg,address[1])
