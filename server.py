@@ -13,6 +13,11 @@ from loopMaster import master as masterLoop
 from message import Message
 from device import Device
 
+########## LOADING CONFIGURATION HERE
+config = None
+with open('config.json') as f:
+    config = json.load(f)
+
 ########## INPUT FOR SERVER 
 private_ip, public_ip = getPublicPirvateIp()
 device_config = {
@@ -24,6 +29,7 @@ device_config = {
     'private_ip' : private_ip,
     'public_ip' : public_ip,
     'master_port' : None,
+    'replace' : False,
 
     # master details 
     'master' : True,
@@ -35,10 +41,17 @@ device_config = {
 
 }
 
-########## LOADING CONFIGURATION HERE
-config = None
-with open('config.json') as f:
-    config = json.load(f)
+if device_config['replace']:
+    with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','w') as f:
+        json.dump(device_config,fp=f,indent=5)
+
+elif not isfile(config['data_path']+'DeviceSpecific/Device_data/device_config.json'):
+    with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','w') as f:
+        json.dump(device_config,fp=f,indent=5)
+
+else :
+    with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','r') as f:
+        device_config = json.load(f)
 
 ########## ESTABLISHING PORT FOR SERVER HERE
 port_list = getPorts()
@@ -79,6 +92,10 @@ if device_object.master:
             server_logger.info('\nGROUP ALREAD EXIST ... EXITING')
             exit()
         else :
+            # update device config
+            device_config['new_group'] = False
+            with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','w') as f:
+                json.dump(device_config,fp=f,indent=5)
             server_logger.info('\nNEW GROUP CREATION COMPLETE')
 
 
@@ -110,4 +127,4 @@ else:
         exit()        
 
     # continue with while loop here
-    followerLoop(device_object,port,server_logger,device_config['master_port'],device_config['new_device'])
+    followerLoop(device_object,port,server_logger)

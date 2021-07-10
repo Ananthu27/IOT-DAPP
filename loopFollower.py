@@ -22,7 +22,12 @@ config = None
 with open('config.json') as f:
     config = json.load(f)
 
-def follower(device_object,port,logger,master_port,new_device=False):
+######### LOADING DEVICE CONFIG HERE
+device_config = None
+with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','r') as f:
+    device_config = json.load(f)
+
+def follower(device_object,port,logger):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         try:
             s.settimeout(30)
@@ -32,39 +37,46 @@ def follower(device_object,port,logger,master_port,new_device=False):
             while True:
 
                 ######## CREATION OF NEW DEVICE HERE
-                if new_device:
+                if device_config['new_device']:
                     logger.info('\n')
                     logger.info('\nINITIATING PUBLIC KEY EXCHANGE WITH MASTER')
-                    msg = message_object.getPublicKeyMessage(device_object,to_port=master_port,nonce=None)
-                    s.sendto(msg,(public_ip,master_port))
+                    msg = message_object.getPublicKeyMessage(device_object,to_port=device_config['master_port'],nonce=None)
+                    s.sendto(msg,(public_ip,device_config['master_port']))
                     msg , address = s.recvfrom(2**16)
                     msg = message_object.getMessage(msg)
 
                     # first check nonce of public key exchange
-                    if device_object.last_nonce[str(master_port)] == decryptRSA(device_object.private_key,msg['nonce']):
+                    if device_object.last_nonce[str(device_config['master_port'])] == decryptRSA(device_object.private_key,msg['nonce']):
 
                         logger.info('\nPUBLIC KEY EXCHANGE WITH MASTER COMPLETE')
                         logger.info('\nINITIATING DEVICE ASSOCIATION REQUEST')
 
                         discard, to_public_key = loadKeyPairRSA(msg['public_key_serialized'],device_object.master_key)
-                        association_msg = message_object.getAssociationRequestMssg(device_object,master_port,to_public_key)
-                        s.sendto(association_msg,(public_ip,master_port))
+                        association_msg = message_object.getAssociationRequestMssg(device_object,device_config['master_port'],to_public_key)
+                        s.sendto(association_msg,(public_ip,device_config['master_port']))
                         association_resp_msg , address = s.recvfrom(2**16)
                         association_resp_msg = message_object.getMessage(association_resp_msg)
                         association_resp_msg['nonce'] = decryptRSA(device_object.private_key,association_resp_msg['nonce'])
 
-                        if association_resp_msg['nonce'] == device_object.last_nonce[str(master_port)] \
+                        if association_resp_msg['nonce'] == device_object.last_nonce[str(device_config['master_port'])] \
                         and device_object.verifyGroupCreation(association_resp_msg['group_creation_tx_receipt']):
                             logger.info('\nGROUPCREATION VERIFIED MASTER AUTHENTICATED')
                             group_table_df = association_resp_msg['group_table']
                             group_table_df.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
                             with open(config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt','wb') as f:
                                 pickle.dump(association_resp_msg['group_creation_tx_receipt'],f)
+                            # updating device config
+                            device_config['new_device'] = False
+                            with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','w') as f:
+                                json.dump(device_config,fp=f,indent=5)
                             logger.info('\nGROUPTABLE UPDATED')
                         
                         else:
                             logger.info('\nSUSPECT MASTER (%s,%d)'%(address[0],address[1]))
                             logger.info('\nDEVICE ASSOSICATION INCOMPLETE')
+                            sleep(5)
+                            s.close()
+                            follower(device_object,port,logger,device_config['master_port'])
                     
                     new_device = False
 
@@ -119,7 +131,7 @@ def follower(device_object,port,logger,master_port,new_device=False):
         except socket.timeout:
             Logger.warning('FOLLOWER TIMEOUT.')
             s.close()
-            follower(device_object,port,Logger,master_port)
+            follower(device_object,port,Logger,device_config['master_port'])
         
         except KeyboardInterrupt:
             logger.info('\n-- EXITING ON : KeyboardInterrupt --')
