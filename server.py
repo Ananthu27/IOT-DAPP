@@ -6,22 +6,34 @@ from os.path import isfile
 
 ########## USER DEFINED FUNCTION IMPORTS
 from network import getPorts, getPublicPirvateIp
+from loopFollower import follower as followerLoop
+from loopMaster import master as masterLoop
 
 ########## USER DEFINED CLASS IMPORTS
 from message import Message
 from device import Device
-from loopFollower import follower as followerLoop
-from loopMaster import master as masterLoop
 
 ########## INPUT FOR SERVER 
-host = '127.0.0.1'
-master = True
-new_group = True
-new_device = True
-future_master = True
-master_key = 'Em0C2Kv9pM'
-device_name = 'testMaster'
 private_ip, public_ip = getPublicPirvateIp()
+device_config = {
+
+    # general details
+    'host' : '127.0.0.1',
+    'device_name' : 'Master1',
+    'master_key' : 'Em0C2Kv9pM',
+    'private_ip' : private_ip,
+    'public_ip' : public_ip,
+    'master_port' : None,
+
+    # master details 
+    'master' : True,
+    'new_group' : True,
+
+    # follower details 
+    'new_device' : False,
+    'future_master' : False,
+
+}
 
 ########## LOADING CONFIGURATION HERE
 config = None
@@ -30,17 +42,22 @@ with open('config.json') as f:
 
 ########## ESTABLISHING PORT FOR SERVER HERE
 port_list = getPorts()
-if '1111' not in port_list and master:
-    port = 1111    
-else :
-    port = None
-    for i in range (6*10**4,6*10**4+2**12,2):
-        if str(i) not in port_list:
-            port = i
-            break
+port = None
+for i in range (6*10**4,6*10**4+2**12,2):
+    if str(i) not in port_list:
+        port = i
+        if device_config['master']:
+            device_config['master_port'] = port
+        break
 
 ########## CREATING OBJECTS HERE
-device_object = Device(device_name,port,master_key,master=master,future_master=True)
+device_object = Device(
+    device_name=device_config['device_name'],
+    port=port,
+    master_key=device_config['master_key'],
+    master=device_config['master'],
+    future_master=device_config['future_master']
+)
 message_object = Message()
 
 ########## IMPORTS FOR LOGGING
@@ -51,10 +68,10 @@ server_logger = createLogger(name='Server',level=INFO,state='DEVELOPMENT')
 
 ########## THIS IS THE MAIN FRAME
 
-# if this device is a master device
+########## MASTER DEVICE
 if device_object.master:
     
-    if new_group:
+    if device_config['new_group']:
         server_logger.info('\nATTEMPTING TO CREATE NEW GROUP')
         new_group_created = device_object.createNewGroup()
         # if new group cannot be created
@@ -78,10 +95,10 @@ if device_object.master:
     # continue infinite while loop
     masterLoop(device_object,port,server_logger)
 
-# if device is not master
+########## FOLLOWER DEVICE
 else:
     # check add device here
-    if new_device:
+    if device_config['new_device']:
         server_logger.info('\nCREATING A NEW DEVICE')
         new_device_created = device_object.createNewDevice()
         if not new_device_created:
@@ -93,4 +110,4 @@ else:
         exit()        
 
     # continue with while loop here
-    followerLoop(device_object,port,server_logger,new_device)
+    followerLoop(device_object,port,server_logger,device_config['master_port'],device_config['new_device'])
