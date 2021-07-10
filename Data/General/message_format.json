@@ -2,5 +2,32 @@
     "MESSAGE_NO" : "MESSAGE NAME",
     "0" : "PUBLIC KEY EXCHANGE",
     "1" : "ASSOCIATION REQUETS",
-    "2" : "ASSOCIATION RESPONSE"
+    "2" : "ASSOCIATION RESPONSE",
+    "3" : "PING",
+    "4" : "PING RESPONSE",
+    "5" : "MESSAGE TRANSACTION PING",
+
+    "MESSAGES RECEIVED BY MASTER" : [0, 1, 3, 5],
+    "MESSAGES RECEIVED BY FOLLOWER" : [2, 4, 5],
+
+    "Outbox/Name.pending.json" : {
+        "to_device_name" : "STRING",
+        "data_message" : "PLAINTEXT STRING"
+    },
+
+    "Outbox/Name.pending.ping.json" : {
+        "to_device_name" : "STRING",
+        "data_message" : "PLAINTEXT STRING",
+        "tx_receipt" : "<class : transaction receipt>",
+        "port" : "INT",
+        "message_id" : "STRING"
+    },
+
+    "Inbox/yyyy.mm.dd.message_id.json" :{
+        "message_id" : "STRING",
+        "from_device_name" : "STRING",
+        "tx_receipt" : "<class : transaction receipt>",
+        "data_message" : "PLAINTEXT STRING"
+    }
+
 }

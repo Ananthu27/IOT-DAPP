@@ -29,7 +29,7 @@ device_config = {
     'private_ip' : private_ip,
     'public_ip' : public_ip,
     'master_port' : None,
-    'replace' : False,
+    'replace' : True,
 
     # master details 
     'master' : True,

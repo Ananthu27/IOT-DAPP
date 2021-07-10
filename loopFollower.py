@@ -8,7 +8,6 @@ from time import sleep
 import pickle
 
 ######## USERDEFIED FUNCTIONS/CLASSES/OBJECTS IMPORT
-from logging import logger
 from message import Message
 from network import getPublicPirvateIp
 from crypto import decryptRSA, loadKeyPairRSA
@@ -133,7 +132,7 @@ def follower(device_object,port,logger):
         except socket.timeout:
             logger.warning('FOLLOWER TIMEOUT.')
             s.close()
-            follower(device_object,port,logger,device_config['master_port'])
+            follower(device_object,port,logger)
         
         except KeyboardInterrupt:
             logger.info('\n-- EXITING ON : KeyboardInterrupt --')

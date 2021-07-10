@@ -87,11 +87,11 @@ assume master dead if last aliveList > 5min
 7. gui for master 
 	1 can only run from master device.
 	2 must show :
-		a current aliveList
+		a current aliveList *
 		b all previous device archive
-		c gas cost details per transaction
-		d interface to access any transaction
-		e blockchain details (not nessasary)
+		c gas cost details per transaction *
+		d interface to access any transaction 
+		e audit trail *
 
 --- remember while making contracts ---
 
