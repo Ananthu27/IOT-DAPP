@@ -3,11 +3,12 @@ import socket
 import traceback
 import json
 from os import listdir
+from os.path import isfile
 from time import sleep
 import pickle
 
 ######## USERDEFIED FUNCTIONS/CLASSES/OBJECTS IMPORT
-from logging import Logger
+from logging import logger
 from message import Message
 from network import getPublicPirvateIp
 from crypto import decryptRSA, loadKeyPairRSA
@@ -24,8 +25,9 @@ with open('config.json') as f:
 
 ######### LOADING DEVICE CONFIG HERE
 device_config = None
-with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','r') as f:
-    device_config = json.load(f)
+if isfile(config['data_path']+'DeviceSpecific/Device_data/device_config.json'):
+    with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','r') as f:
+        device_config = json.load(f)
 
 def follower(device_object,port,logger):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -129,9 +131,9 @@ def follower(device_object,port,logger):
                         device_object.getMessage(msg,address[1])
 
         except socket.timeout:
-            Logger.warning('FOLLOWER TIMEOUT.')
+            logger.warning('FOLLOWER TIMEOUT.')
             s.close()
-            follower(device_object,port,Logger,device_config['master_port'])
+            follower(device_object,port,logger,device_config['master_port'])
         
         except KeyboardInterrupt:
             logger.info('\n-- EXITING ON : KeyboardInterrupt --')

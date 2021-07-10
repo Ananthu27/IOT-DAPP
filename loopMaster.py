@@ -75,7 +75,7 @@ def master(device_object,port,logger):
                         logger.warning('\nASSOCIATION REQUEST INCOMPLETE WITH (%s,%d)'%(address[0],address[1]))
 
         except socket.timeout:
-            logger.warning('\n SERVER TIMEOUT DUE TO INACTIVITY')
+            # logger.warning('\n SERVER TIMEOUT DUE TO INACTIVITY')
             s.close()
             master(device_object,port,logger)
             
