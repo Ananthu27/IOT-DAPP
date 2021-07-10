@@ -2,6 +2,8 @@
 import socket 
 import traceback
 import json
+from os import listdir, rename
+from random import choice
 
 ######## USERDEFIED FUNCTIONS/CLASSES/OBJECTS IMPORT
 from message import Message
@@ -74,6 +76,45 @@ def master(device_object,port,logger):
                         logger.warning('\nSUSPECT (%s,%d)'%(address[0],address[1]))
                         logger.warning('\nASSOCIATION REQUEST INCOMPLETE WITH (%s,%d)'%(address[0],address[1]))
 
+                ########### DATA_MSG TRANACTION PING MESSAGE HANDLED HERE, MESSAGE NUMBER = 5
+                elif message_no == '5':
+                    if device_object.verifyMessageTransaction(msg['tx_receipt']):
+                        device_object.getMessage(msg,address[1])
+
+                ########### CHECK OUTBOX HERE
+                temp = listdir(config['data_path']+'DeviceSpecific/Outbox')
+                if len(temp):
+                    outbox = []
+                    for item in temp:
+                        if item.endswith('.pending.json'):
+                            outbox.append(item)
+
+                    if len(outbox):
+                        for messageName in outbox:
+                            device_object.addMessage(messageName)
+                        del outbox
+
+                    temp = listdir(config['data_path']+'DeviceSpecific/Outbox')
+                    ping = []
+                    for item in temp:
+                        if item.endswith('.pending.ping.json'):
+                            ping.append(item)
+                    
+                    if len(ping):
+                        # ping a random transaction, sleep and exit
+                        messageName = choice(ping)
+                        msg_info = None
+                        with open(messageName,'r') as f:
+                            msg_info = json.load(f)
+                        msg = message_object.getMessageTransactionPingMssg(
+                            device_object,
+                            msg_info['tx_receipt'],
+                            msg_info['message_id']
+                        )
+                        s.sendto(msg,(public_ip,msg_info['port']))
+                        # self log audit trail here
+                        rename(messageName,messageName.replace('.pending.ping','.completed'))
+                        
         except socket.timeout:
             # logger.warning('\n SERVER TIMEOUT DUE TO INACTIVITY')
             s.close()
