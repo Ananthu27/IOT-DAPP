@@ -4,6 +4,7 @@ import traceback
 import json
 from os import listdir
 from os.path import isfile
+from os import rename
 from time import sleep
 import pickle
 
@@ -114,6 +115,8 @@ def follower(device_object,port,logger):
                             msg_info['message_id']
                         )
                         s.sendto(msg,(public_ip,msg_info['port']))
+                        # send audit trail ping to master
+                        rename(messageName,messageName.replace('.pending.ping','.completed'))
                         sleep(5)
 
                 ######## LOOP FOR INCOMING MESSAGES UNTIL TIMEOUT
