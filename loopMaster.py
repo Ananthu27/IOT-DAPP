@@ -61,7 +61,14 @@ def master(device_object,port,logger):
                         msg_info['message_id']
                     )
                     s.sendto(msg,(public_ip,int(msg_info['port'])))
-                    # self log audit trail here
+                    
+                    # audit message transtion here
+                    logger.info('Data Message Transaction with message_id = %s Completed! From %s to %s'%(
+                        msg_info['message_id'],
+                        device_object.device_name,
+                        msg_info['to_device_name']
+                    ))
+
                     rename(messageName,messageName.replace('.pending.ping','.completed'))
             
             # CHECKING INBOX HERE
@@ -134,7 +141,11 @@ def master(device_object,port,logger):
 
             ########### AUDIT TRAIL LOG MESSAGE
             elif message_no == '6':
-                pass
+                if device_object.verifyMessageTransaction(msg['tx_receipt']):
+                    logger.info(msg['subject']+'From %s to %s'%(
+                        msg['from_device_name'],
+                        msg_info['to_device_name']
+                    ))
             
             ######## UNIDENTIFIED MESSAGE NO
             else :

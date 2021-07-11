@@ -91,17 +91,22 @@ class Message:
     ######### FUNCTION TO CREATE PING/ALIVE MESSAGE
     @logExceptionsWrapper
     def getPingMessage(self,device_object,to_port,to_public_key):
-        nonce = getTrueRandom()
-        device_object.last_nonce[str(to_port)] = nonce
-        msg = {
-            'nonce' : encryptRSA(to_public_key,nonce),
-            'message_no' : '3',
-            'device_name' : device_object.device_name
-        }            
-        msg = pickle.dumps(msg)
-        if len(msg) >= (2**16-8):
-            raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
-        return msg
+        if not self.master :
+            nonce = getTrueRandom()
+            device_object.last_nonce[str(to_port)] = nonce
+            tx_receipt = None
+            with open(config['data_path']+'DeviceSpecific/Transaction_receipt/DeviceAssociationReceipt','rb') as f:
+                tx_receipt = pickle.load(f)
+            msg = {
+                'nonce' : encryptRSA(to_public_key,nonce),
+                'message_no' : '3',
+                'device_name' : device_object.device_name,
+                'tx_receipt' : tx_receipt
+            }            
+            msg = pickle.dumps(msg)
+            if len(msg) >= (2**16-8):
+                raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
+            return msg
 
     ######### FUNCTION TO CREATE PING/ALIVE RESPONSE MESSAGE
     @logExceptionsWrapper
@@ -162,7 +167,7 @@ class Message:
                     raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
         return msg
 
-    ######### FUNCTION TO SEND MESSAGE TRANSACTION PING
+    ######### FUNCTION TO CREATE MESSAGE TRANSACTION PING
     @logExceptionsWrapper
     def getMessageTransactionPingMssg(self,device_object,tx_receipt,message_id):
         msg = {
@@ -174,3 +179,28 @@ class Message:
         if len(msg) >= (2**16-8):
             raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
         return msg
+
+    ######### FUNCTION TO CREATE AUDIT TRAIL MESSAGE
+    @logExceptionsWrapper
+    def getAuditMssg(
+        self,
+        message_id,
+        from_device_name = 'unspecified',
+        to_device_name = 'unspecified',
+        subject = 'unspecified',
+        ):
+        if not self.master:
+            tx_receipt = None
+            with open(config['data_path']+'DeviceSpecific/Transaction_receipt/MessageTransactionReceipt.%s'%(message_id),'rb') as f:
+                tx_receipt = pickle.load(f)
+            msg = {
+                'message_no' : '6',
+                'from_device_name' : from_device_name,
+                'to_device_name' : to_device_name,
+                'subject' : subject,
+                'tx_receipt' : tx_receipt,
+            }
+            msg = pickle.dumps(msg)
+            if len(msg) >= (2**16-8):
+                raise(PayloadExceedsUdpMtu(size=len(msg),function=__file__+'.getPublicKeyMessage()'))
+            return msg

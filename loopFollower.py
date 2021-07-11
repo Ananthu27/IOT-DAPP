@@ -120,7 +120,16 @@ def follower(device_object,port,logger):
                         msg_info['message_id']
                     )
                     s.sendto(msg,(public_ip,int(msg_info['port'])))
-                    # self log audit trail here
+                    
+                    # send audit trail to master 
+                    audit_msg = message_object.getAuditMssg(
+                        msg_info['message_id'],
+                        device_object.device_name,
+                        msg_info['to_device_name'],
+                        subject='Data Message Transaction with message_id = %s Completed!'%(msg_info['message_id'])
+                    )
+                    s.sendto(audit_msg,(public_ip,device_config['master_port']))
+
                     rename(messageName,messageName.replace('.pending.ping','.completed'))
 
             ######## LOOP FOR INCOMING MESSAGES UNTIL TIMEOUT
