@@ -36,7 +36,7 @@ def master(device_object,port,logger):
 
                 if len(outbox):
                     for messageName in outbox:
-                        device_object.addMessage(messageName)
+                        device_object.addMessage(config['data_path']+'DeviceSpecific/Outbox/'+messageName)
                     del outbox
 
                 temp = listdir(config['data_path']+'DeviceSpecific/Outbox')
