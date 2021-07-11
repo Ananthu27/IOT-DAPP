@@ -133,11 +133,13 @@ def follower(device_object,port,logger):
                 if device_object.verifyMessageTransaction(msg['tx_receipt']):
                     device_object.getMessage(msg,address[1])
 
-            ######## ELSE LOOP AGAIN
+            ######## UNIDENTIFIED MESSAGE NO
             else :
-                logger.warning('SKIPPING UNIDENTIFIED MESSAGE NO %s'%(message_no))
-                s.close()
-                follower(device_object,port,logger)
+                logger.warning('UNIDENTIFIED MESSAGE NO : %s'%(message_no))
+
+            ######## FINALLY LOOP AGAIN
+            s.close()
+            follower(device_object,port,logger)
 
         except socket.timeout:
             logger.warning('FOLLOWER TIMEOUT.')

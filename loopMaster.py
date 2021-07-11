@@ -121,12 +121,14 @@ def master(device_object,port,logger):
             ########### AUDIT TRAIL LOG MESSAGE
             elif message_no == '6':
                 pass
-                        
-            ########### ELSE LOOP AGAIN
+            
+            ######## UNIDENTIFIED MESSAGE NO
             else :
-                logger.warning('CLOSING ITERATION DUE TO UNIDENTIFIED MESSAGE NO : %s'%(message_no))
-                s.close()
-                master(device_object,port,logger)
+                logger.warning('UNIDENTIFIED MESSAGE NO : %s'%(message_no))
+            
+            ########### ELSE LOOP AGAIN
+            s.close()
+            master(device_object,port,logger)
 
         except socket.timeout:
             # logger.warning('\n SERVER TIMEOUT DUE TO INACTIVITY')
