@@ -114,6 +114,10 @@ class Device:
                     result = False
                 finally:
                     group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
+                    with open(config['data_path']+'DeviceSpecific/Device_data/group_table.json','r') as f:
+                        group_table = json.load(f)
+                    with open (config['data_path']+'DeviceSpecific/Device_data/group_table.json','w') as f:
+                        json.dump(group_table,fp=f,indent=5)
         return result
 
     ########## FUNCITON TO ADD DEVICE TO GROUP TABLE

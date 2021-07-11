@@ -90,15 +90,25 @@ def master(device_object,port,logger):
                 # if device is authenticated 
                 if device_object.verifyDeviceAssociation(association_msg['association_tx_receipt']):
                     logger.info('\nVERIFIED DEVICE ASSOCIATION FOR (%s,%d)'%(address[0],address[1]))
-                    # add to group table here
-                    device_object.addDeviceToGroupTable(
-                        '%s::%s'%(private_ip,public_ip),
-                        address[1],
-                        association_msg['device_name'],
-                        association_msg['public_key_serialized'],
-                        association_msg['future_master']
-                    )
-                    logger.info('\nADDED (%s,%d) TO GROUPTABLE'%(address[0],address[1]))
+                    group_table_df = device_object.retrieveGroupTable()
+                    group_table_df.set_index('DEVICE_NAME',inplace=True)
+
+                    try : 
+                        device = group_table_df.loc[association_msg['device_name']]
+                        device_object.updateLastPing(association_msg['device_name'])
+                        logger.info('\n(%s,%d) ALREADY IN GROUPTABLE'%(address[0],address[1]))
+
+                    except KeyError:
+                        # add to group table here
+                        device_object.addDeviceToGroupTable(
+                            '%s::%s'%(private_ip,public_ip),
+                            address[1],
+                            association_msg['device_name'],
+                            association_msg['public_key_serialized'],
+                            association_msg['future_master']
+                        )
+                        logger.info('\nADDED (%s,%d) TO GROUPTABLE'%(address[0],address[1]))
+
                     response_msg = message_object.getAssociationResponseMssg(device_object,nonce,to_public_key)
                     enc_reponse_msg = response_msg
                     s.sendto(enc_reponse_msg,address)
