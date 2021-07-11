@@ -294,22 +294,21 @@ class Device:
                     en_msg_data
                 ).call()
 
-                print (valid_transaction)
 
-                # if valid_transaction:
-                #     tx_hash = contract.functions.addMessage(
-                #         self.master_key,
-                #         self.device_name,
-                #         msg['to_device_name'],
-                #         message_id,
-                #         en_msg_data    
-                #     ).transact()
-                #     msg['tx_receipt']  = bcc.eth.wait_for_transaction_receipt(tx_hash)
-                #     msg['port'] = to_device['PORT']
-                #     msg['message_id'] = message_id
-                #     with open(messageFileName,'w') as f:
-                #         json.dump(msg,fp=f,indent=4)
-                #     rename(messageFileName,messageFileName.replace('.pending','.pending.ping'))
+                if valid_transaction:
+                    tx_hash = contract.functions.addMessage(
+                        self.master_key,
+                        self.device_name,
+                        msg['to_device_name'],
+                        message_id,
+                        en_msg_data    
+                    ).transact()
+                    msg['tx_receipt']  = bcc.eth.wait_for_transaction_receipt(tx_hash)
+                    msg['port'] = to_device['PORT']
+                    msg['message_id'] = message_id
+                    with open(messageFileName,'w') as f:
+                        json.dump(msg,fp=f,indent=4)
+                    rename(messageFileName,messageFileName.replace('.pending','.pending.ping'))
 
             except KeyError:
                 device_logger.warning('UNKNOW DEVICE : '+msg['to_device_name'])

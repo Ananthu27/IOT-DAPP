@@ -285,7 +285,7 @@ contract Storage {
         string memory to_device_name,
         string memory message_id,
         string memory data_message
-    )public view returns (uint256){
+    )public returns (bool){
         
         // check if group exists and both devices are authentic members
         if(
@@ -294,22 +294,23 @@ contract Storage {
             && followerExists(secret_key, from_device_name)>0
             && !messageExist(message_id)
         ){
-            // // create a new message
-            // message_info memory new_message;
-            // new_message.exist = true;
-            // new_message.from_device_name = from_device_name;
-            // new_message.to_device_name = to_device_name;
-            // new_message.message = data_message;
+            // create a new message
+            message_info memory new_message;
+            new_message.exist = true;
+            new_message.from_device_name = from_device_name;
+            new_message.to_device_name = to_device_name;
+            new_message.message = data_message;
 
-            // // add message and collect token fee
-            // messages[message_id] = new_message;
-            // groups[secret_key].tokens -= 1;
-            // // emit event here
-            // emit MessageTransaction(message_id, from_device_name, to_device_name);
+            // add message and collect token fee
+            messages[message_id] = new_message;
+            groups[secret_key].tokens -= 1;
 
-            return followerExists(secret_key, from_device_name);
+            // emit event here
+            emit MessageTransaction(message_id, from_device_name, to_device_name);
+
+            return true;
         }
-        return 0;
+        return false;
     }
 
     // FUNCTION TO RETRIEVE ADDED MESSAGE DATA
