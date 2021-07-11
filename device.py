@@ -168,7 +168,7 @@ class Device:
                         group_table = json.load(f)
                     with open (config['data_path']+'DeviceSpecific/Device_data/group_table.json','w') as f:
                         json.dump(group_table,fp=f,indent=5)
-                        
+
         return result
 
     ############################## FOLLOWING ARE FUNCTION ON THE BLOCKCHAIN ##############################
@@ -214,7 +214,7 @@ class Device:
     @logExceptionsWrapper
     def verifyGroupCreation(self,tx_receipt):
         try:
-            log = contract.events.GroupCreation().processLog(tx_receipt.logs[0])
+            log = contract.events.GroupCreation().processLog(tx_receipt.logs[1])
             return True
         except Exception as e:
             return False
@@ -276,38 +276,40 @@ class Device:
 
                 message_id = str(random())
                 to_public_key = to_device['PUB_KEY']
-                print (type(to_public_key))
                 discard, to_public_key = loadKeyPairRSA(to_public_key,self.master_key)
-                print ('here')
+
                 en_msg_data = encryptRSA(to_public_key,msg['data_message'])
 
                 # converting encrypted to string without affecting encoding
                 en_msg_data = list(en_msg_data)
                 en_msg_data = [str(item) for item in en_msg_data]
                 en_msg_data = '-'.join(en_msg_data)
+                print (type(en_msg_data))
 
                 valid_transaction = contract.functions.addMessage(
                     self.master_key,
                     self.device_name,
                     msg['to_device_name'],
                     message_id,
-                    en_msg_data    
+                    en_msg_data
                 ).call()
 
-                if valid_transaction:
-                    tx_hash = contract.functions.addMessage(
-                        self.master_key,
-                        self.device_name,
-                        msg['to_device_name'],
-                        message_id,
-                        en_msg_data    
-                    ).transact()
-                    msg['tx_receipt']  = bcc.eth.wait_for_transaction_receipt(tx_hash)
-                    msg['port'] = to_device['PORT']
-                    msg['message_id'] = message_id
-                    with open(messageFileName,'w') as f:
-                        json.dump(msg,fp=f,indent=4)
-                    rename(messageFileName,messageFileName.replace('.pending','.pending.ping'))
+                print (valid_transaction)
+
+                # if valid_transaction:
+                #     tx_hash = contract.functions.addMessage(
+                #         self.master_key,
+                #         self.device_name,
+                #         msg['to_device_name'],
+                #         message_id,
+                #         en_msg_data    
+                #     ).transact()
+                #     msg['tx_receipt']  = bcc.eth.wait_for_transaction_receipt(tx_hash)
+                #     msg['port'] = to_device['PORT']
+                #     msg['message_id'] = message_id
+                #     with open(messageFileName,'w') as f:
+                #         json.dump(msg,fp=f,indent=4)
+                #     rename(messageFileName,messageFileName.replace('.pending','.pending.ping'))
 
             except KeyError:
                 device_logger.warning('UNKNOW DEVICE : '+msg['to_device_name'])
