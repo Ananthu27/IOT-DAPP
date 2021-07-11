@@ -304,15 +304,12 @@ class Device:
                     ).transact()
                     tx_receipt = bcc.eth.wait_for_transaction_receipt(tx_hash)
                     msg['tx_receipt']  = config['data_path']+'DeviceSpecific/Transaction_receipt/MessageTransactionReceipt.%s'%(message_id)
-                    msg['port'] = to_device['PORT']
+                    msg['port'] = str(to_device['PORT'])
                     msg['message_id'] = message_id
-                    print (msg)
-                    print ()
                     with open(messageFileName,'w') as f:
                         json.dump(msg,fp=f,indent=4)
                     with open(msg['tx_receipt'],'wb') as f:
-                        pickle.dump(tx_receipt)
-                    print ('here')
+                        pickle.dump(tx_receipt,f)
                     rename(messageFileName,messageFileName.replace('.pending','.pending.ping'))
 
             except KeyError:
@@ -335,15 +332,18 @@ class Device:
             self.device_name,
             msg['message_id']
         ).call()
+        print (from_device_name)
 
         # reject on duplicate identity
         group_table_df = self.retrieveGroupTable()
+        group_table_df.set_index('DEVICE_NAME',inplace=True)
+        suspect = False
         try : 
             from_device = group_table_df.loc[from_device_name]
             if port != from_device['PORT']:
-                return None
+                suspect = True
         except :
-            return None
+            suspect = True
 
         # get data and store in inbox
         cipher_text = contract.functions.retrieveMessageData(
@@ -356,20 +356,22 @@ class Device:
         cipher_text = [int(item) for item in cipher_text]
         cipher_text = bytes(cipher_text)
         data_message = decryptRSA(self.private_key,cipher_text)
-
         # write and return incoming message 
         write_msg = {
+            'suspect' : suspect,
             'message_id' : msg['message_id'],
             'from_device_name' : from_device_name,
-            'tx_receipt' : msg['message_tx_eceipt'],
+            'tx_receipt' : config['data_path']+'DeviceSpecific/Transaction_receipt/MessageTransactionReceipt.%s'%(msg['message_id']),
             'data_message' : data_message
         }
         with open(config['data_path']+'DeviceSpecific/Inbox/%s.json'%(msg['message_id']),'w') as f:
-            from_device = group_table_df.loc[from_device_name]
+            # from_device = group_table_df.loc[from_device_name]
             json.dump(
                 write_msg,
                 fp=f,
                 indent=5
             )
+        with open(write_msg['tx_receipt'],'wb') as f:
+            pickle.dump(msg['message_tx_eceipt'],f)
 
         return write_msg

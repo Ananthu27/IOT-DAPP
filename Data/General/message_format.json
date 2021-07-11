@@ -22,15 +22,16 @@
     "Outbox/Name.pending.ping.json" : {
         "to_device_name" : "STRING",
         "data_message" : "PLAINTEXT STRING",
-        "tx_receipt" : "<class : transaction receipt>",
+        "tx_receipt" : "STRING(PATH)",
         "port" : "INT",
         "message_id" : "STRING"
     },
 
     "Inbox/yyyy.mm.dd.message_id.json" :{
+        "suspect" : "BOOL",
         "message_id" : "STRING",
         "from_device_name" : "STRING",
-        "tx_receipt" : "<class : transaction receipt>",
+        "tx_receipt" : "STRING(PATH)",
         "data_message" : "PLAINTEXT STRING"
     }
 
