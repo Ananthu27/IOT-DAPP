@@ -75,7 +75,7 @@ class Device:
             private_ip, public_ip = getPublicPirvateIp()
             discard, public_key_serialized = retrieveKeyPairRsa(self.master_key,True)
 
-            group_table['IP'] = [('%s::%s')%(private_ip,public_ip)]
+            group_table['IP'] = [('%s/%s')%(private_ip,public_ip)]
             group_table['PORT'] = [self.port]
             group_table['DEVICE_NAME'] = [self.device_name]
             group_table['PUB_KEY'] = [public_key_serialized]
@@ -85,6 +85,11 @@ class Device:
             # group_table = group_table.set_index('DEVICE_NAME')
 
             group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
+
+            with open(config['data_path']+'DeviceSpecific/Device_data/group_table.json','r') as f:
+                group_table = json.load(f)
+            with open (config['data_path']+'DeviceSpecific/Device_data/group_table.json','w') as f:
+                json.dump(group_table,fp=f,indent=5)
 
     ########## FUNCTION TO RETURN GROUP TABLE AS PANDAS DF
     @logExceptionsWrapper
@@ -233,7 +238,7 @@ class Device:
     ######### FUNCTION TO ADD DATA MESSAGE TO BLOCKCHAIN
     @logExceptionsWrapper
     def addMessage(self,messageFileName):
-        
+
         if isfile(messageFileName):
             msg = None
             with open(messageFileName) as f:
@@ -241,6 +246,7 @@ class Device:
 
             #check if to_device exist and get corresponding public key from group table
             group_table_df = self.retrieveGroupTable()
+            group_table_df.set_index('DEVICE_NAME',inplace=True)
 
             try :
                 to_device = group_table_df.loc[msg['to_device_name']]
