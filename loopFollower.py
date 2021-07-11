@@ -70,7 +70,7 @@ def follower(device_object,port,logger):
                         with open(config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt','wb') as f:
                             pickle.dump(association_resp_msg['group_creation_tx_receipt'],f)
                         # updating device config
-                        device_config['association'] = False
+                        device_config['association'] = True
                         with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','w') as f:
                             json.dump(device_config,fp=f,indent=5)
                         logger.info('\nGROUPTABLE UPDATED')
