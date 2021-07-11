@@ -159,8 +159,16 @@ class Device:
                     group_table = group_table.append(new_device,ignore_index=True)
                     result = True
                 finally:
+                    # storing group table
+                    with open(config['data_path']+'DeviceSpecific/Device_data/group_table','wb') as f:
+                        pickle.dump(group_table,file=f)
+                    # saving group table as json (for frontend only)
                     group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
-
+                    with open(config['data_path']+'DeviceSpecific/Device_data/group_table.json','r') as f:
+                        group_table = json.load(f)
+                    with open (config['data_path']+'DeviceSpecific/Device_data/group_table.json','w') as f:
+                        json.dump(group_table,fp=f,indent=5)
+                        
         return result
 
     ############################## FOLLOWING ARE FUNCTION ON THE BLOCKCHAIN ##############################
@@ -262,7 +270,7 @@ class Device:
             #check if to_device exist and get corresponding public key from group table
             group_table_df = self.retrieveGroupTable()
             group_table_df.set_index('DEVICE_NAME',inplace=True)
-
+            # print (group_table_df)
             try :
                 to_device = group_table_df.loc[msg['to_device_name']]
 
