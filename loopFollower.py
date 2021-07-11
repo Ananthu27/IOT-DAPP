@@ -104,22 +104,24 @@ def follower(device_object,port,logger):
                 for item in temp:
                     if item.endswith('.pending.ping.json'):
                         ping.append(item)
-                    
+                
                 if len(ping):
                     # ping a random transaction, sleep and exit
-                    messageName = choice(ping)
+                    messageName = config['data_path']+'DeviceSpecific/Outbox/'+choice(ping)
                     msg_info = None
+                    tx_receipt = None
                     with open(messageName,'r') as f:
                         msg_info = json.load(f)
+                    with open(msg_info['tx_receipt'],'rb') as f:
+                        tx_receipt = pickle.load(f)
                     msg = message_object.getMessageTransactionPingMssg(
                         device_object,
-                        msg_info['tx_receipt'],
+                        tx_receipt,
                         msg_info['message_id']
                     )
-                    s.sendto(msg,(public_ip,msg_info['port']))
-                    # send audit trail ping to master
+                    s.sendto(msg,(public_ip,int(msg_info['port'])))
+                    # self log audit trail here
                     rename(messageName,messageName.replace('.pending.ping','.completed'))
-                    sleep(5)
 
             ######## LOOP FOR INCOMING MESSAGES UNTIL TIMEOUT
             logger.info('\nWAITING FOR INCOMMING MESSAGES (EXITING IN 30S)')
