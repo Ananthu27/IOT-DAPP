@@ -1,4 +1,5 @@
 ######## GENERAL IMPORTS
+import pickle
 import socket 
 import traceback
 import json
@@ -49,11 +50,14 @@ def master(device_object,port,logger):
                     # ping a random transaction, sleep and exit
                     messageName = choice(ping)
                     msg_info = None
+                    tx_receipt = None
                     with open(messageName,'r') as f:
                         msg_info = json.load(f)
+                    with open(msg_info['tx_receipt'],'rb') as f:
+                        tx_receipt = pickle.load(f)
                     msg = message_object.getMessageTransactionPingMssg(
                         device_object,
-                        msg_info['tx_receipt'],
+                        tx_receipt,
                         msg_info['message_id']
                     )
                     s.sendto(msg,(public_ip,msg_info['port']))

@@ -284,7 +284,6 @@ class Device:
                 en_msg_data = list(en_msg_data)
                 en_msg_data = [str(item) for item in en_msg_data]
                 en_msg_data = '-'.join(en_msg_data)
-                print (type(en_msg_data))
 
                 valid_transaction = contract.functions.addMessage(
                     self.master_key,
@@ -303,11 +302,17 @@ class Device:
                         message_id,
                         en_msg_data    
                     ).transact()
-                    msg['tx_receipt']  = bcc.eth.wait_for_transaction_receipt(tx_hash)
+                    tx_receipt = bcc.eth.wait_for_transaction_receipt(tx_hash)
+                    msg['tx_receipt']  = config['data_path']+'DeviceSpecific/Transaction_receipt/MessageTransactionReceipt.%s'%(message_id)
                     msg['port'] = to_device['PORT']
                     msg['message_id'] = message_id
+                    print (msg)
+                    print ()
                     with open(messageFileName,'w') as f:
                         json.dump(msg,fp=f,indent=4)
+                    with open(msg['tx_receipt'],'wb') as f:
+                        pickle.dump(tx_receipt)
+                    print ('here')
                     rename(messageFileName,messageFileName.replace('.pending','.pending.ping'))
 
             except KeyError:
