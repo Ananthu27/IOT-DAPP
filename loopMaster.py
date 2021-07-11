@@ -48,7 +48,7 @@ def master(device_object,port,logger):
                 
                 if len(ping):
                     # ping a random transaction, sleep and exit
-                    messageName = choice(ping)
+                    messageName = config['data_path']+'DeviceSpecific/Outbox/'+choice(ping)
                     msg_info = None
                     tx_receipt = None
                     with open(messageName,'r') as f:
@@ -60,7 +60,7 @@ def master(device_object,port,logger):
                         tx_receipt,
                         msg_info['message_id']
                     )
-                    s.sendto(msg,(public_ip,msg_info['port']))
+                    s.sendto(msg,(public_ip,int(msg_info['port'])))
                     # self log audit trail here
                     rename(messageName,messageName.replace('.pending.ping','.completed'))
             
