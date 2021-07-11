@@ -75,11 +75,19 @@ def master(device_object,port,logger):
                     else:
                         logger.warning('\nSUSPECT (%s,%d)'%(address[0],address[1]))
                         logger.warning('\nASSOCIATION REQUEST INCOMPLETE WITH (%s,%d)'%(address[0],address[1]))
+                
+                ########### INCOMING ALIVE PING MESSAGE
+                elif message_no == '3':
+                    pass
 
                 ########### DATA_MSG TRANACTION PING MESSAGE HANDLED HERE, MESSAGE NUMBER = 5
                 elif message_no == '5':
                     if device_object.verifyMessageTransaction(msg['tx_receipt']):
                         device_object.getMessage(msg,address[1])
+
+                ########### AUDIT TRAIL LOG MESSAGE
+                elif message_no == '6':
+                    pass
 
                 ########### CHECK OUTBOX HERE
                 temp = listdir(config['data_path']+'DeviceSpecific/Outbox')

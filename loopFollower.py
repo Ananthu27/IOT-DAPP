@@ -126,9 +126,13 @@ def follower(device_object,port,logger):
                 logger.info('\nMESSAGE NO : %s FROM (%s,%d)'%(message_no,address[0],address[1]))
 
                 ######## ANSWER DIFFERNET MESSAGES HERE
+                
+                ######## ALIVE PING RESPONSE HANDLED HERE
+                if message_no=='4':
+                    pass
 
                 ######## DATA_MSG TRANACTION PING MESSAGE HANDLED HERE, MESSAGE NUMBER = 5
-                if message_no == '5':
+                elif message_no == '5':
                     if device_object.verifyMessageTransaction(msg['tx_receipt']):
                         device_object.getMessage(msg,address[1])
 
