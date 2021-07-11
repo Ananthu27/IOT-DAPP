@@ -134,7 +134,7 @@ def follower(device_object,port,logger):
 
             ######## DATA_MSG TRANACTION PING MESSAGE HANDLED HERE, MESSAGE NUMBER = 5
             elif message_no == '5':
-                if device_object.verifyMessageTransaction(msg['tx_receipt']):
+                if device_object.verifyMessageTransaction(msg['message_tx_eceipt']):
                     device_object.getMessage(msg,address[1])
 
             ######## UNIDENTIFIED MESSAGE NO
