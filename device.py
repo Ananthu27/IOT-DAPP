@@ -249,11 +249,14 @@ class Device:
             group_table_df.set_index('DEVICE_NAME',inplace=True)
 
             try :
+                print ('here')
                 to_device = group_table_df.loc[msg['to_device_name']]
 
                 message_id = str(random())
                 to_public_key = to_device['PUB_KEY']
+                print (to_public_key)
                 discard, to_public_key = loadKeyPairRSA(to_public_key,self.master_key)
+                print ('here')
                 en_msg_data = encryptRSA(to_public_key,msg['data_message'])
 
                 # converting encrypted to string without affecting encoding

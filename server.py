@@ -38,6 +38,7 @@ device_config = {
     # follower details 
     'new_device' : False,
     'future_master' : False,
+    'association' : False
 
 }
 
@@ -121,6 +122,10 @@ else:
         if not new_device_created:
             server_logger.info('\nDEVICE ALREADY EXSIT ... EXITING')
             exit()
+        else :
+            device_config['new_device'] = False
+            with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','w') as f:
+                json.dump(device_config,fp=f,indent=5)
 
     if not isfile(config['data_path']+'DeviceSpecific/Transaction_receipt/DeviceAssociationReceipt'):
         server_logger.info('\nIMPORTATN FILES ARE MISSING ... EXITING')

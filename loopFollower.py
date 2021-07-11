@@ -38,12 +38,13 @@ def follower(device_object,port,logger):
 
         
             ######## CREATION OF NEW DEVICE HERE
-            if device_config['new_device']:
+            if not device_config['association']:
 
                 logger.info('\n')
                 logger.info('\nINITIATING PUBLIC KEY EXCHANGE WITH MASTER')
                 msg = message_object.getPublicKeyMessage(device_object,to_port=device_config['master_port'],nonce=None)
                 s.sendto(msg,(public_ip,device_config['master_port']))
+                logger.info('\nWAITING FOR PUBLIC KEY EXCHANGE REPLY (EXITING IN 30S)')
                 msg , address = s.recvfrom(2**16)
                 msg = message_object.getMessage(msg)
 
@@ -55,6 +56,7 @@ def follower(device_object,port,logger):
                     discard, to_public_key = loadKeyPairRSA(msg['public_key_serialized'],device_object.master_key)
                     association_msg = message_object.getAssociationRequestMssg(device_object,device_config['master_port'],to_public_key)
                     s.sendto(association_msg,(public_ip,device_config['master_port']))
+                    logger.info('\nWAITING FOR ASSOCIATION RESPONSE (EXITING IN 30S)')
                     association_resp_msg , address = s.recvfrom(2**16)
                     association_resp_msg = message_object.getMessage(association_resp_msg)
                     association_resp_msg['nonce'] = decryptRSA(device_object.private_key,association_resp_msg['nonce'])
@@ -67,7 +69,7 @@ def follower(device_object,port,logger):
                         with open(config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt','wb') as f:
                             pickle.dump(association_resp_msg['group_creation_tx_receipt'],f)
                         # updating device config
-                        device_config['new_device'] = False
+                        device_config['association'] = False
                         with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','w') as f:
                             json.dump(device_config,fp=f,indent=5)
                         logger.info('\nGROUPTABLE UPDATED')
@@ -117,6 +119,7 @@ def follower(device_object,port,logger):
                     sleep(5)
 
             ######## LOOP FOR INCOMING MESSAGES UNTIL TIMEOUT
+            logger.info('\nWAITING FOR INCOMMING MESSAGES (EXITING IN 30S)')
             msg, address = s.recvfrom(2**16)
             msg = message_object.getMessage(msg)
             message_no = msg['message_no']
