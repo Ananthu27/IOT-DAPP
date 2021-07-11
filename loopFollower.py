@@ -67,6 +67,8 @@ def follower(device_object,port,logger):
                         logger.info('\nGROUPCREATION VERIFIED MASTER AUTHENTICATED')
                         group_table_df = association_resp_msg['group_table']
                         group_table_df.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
+                        with open(config['data_path']+'DeviceSpecific/Device_data/group_table','wb') as f:
+                            pickle.dump(group_table_df,f)
                         with open(config['data_path']+'DeviceSpecific/Transaction_receipt/GroupCreationReceipt','wb') as f:
                             pickle.dump(association_resp_msg['group_creation_tx_receipt'],f)
                         # updating device config
