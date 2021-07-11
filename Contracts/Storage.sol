@@ -75,8 +75,8 @@ contract Storage {
         string memory _device_name
     )public view returns (uint256){
         if(
-            groupExists(secret_key) &&
-            devices[_device_name].exist
+            groupExists(secret_key) 
+            && devices[_device_name].exist
         ){
             for(uint i=0; i<groups[secret_key].followers.length; i++){
                 if(keccak256(bytes(groups[secret_key].followers[i])) == keccak256(bytes(_device_name)))
@@ -105,25 +105,20 @@ contract Storage {
             //transfer funds 
             deploy_wallet.transfer(msg.value);
             
-            //if master device exists
-            if (devices[master_name].exist)
-                if (devices[master_name].master || !devices[master_name].future_master)
-                    return false;
-            // if master device doesn't exists
-            else {
-                device_info memory master;
-                master.exist = true;
-                master.device_name = master_name;
-                master.public_key = master_public_key;
-                master.previous_keys = new string[](0);
-                master.public_address = master_public_address;
-                master.master = true;
-                master.future_master = true;
+            // creating master device
+            device_info memory master;
+            master.exist = true;
+            master.device_name = master_name;
+            master.public_key = master_public_key;
+            master.previous_keys = new string[](0);
+            master.public_address = master_public_address;
+            master.master = true;
+            master.future_master = true;
 
-                // adding master as new device
-                devices[master_name] = master;
-                emit DeviceAssociation(master_name, master_name);
-            }
+            // adding master as new device
+            devices[master_name] = master;
+            emit DeviceAssociation(master_name, master_name);
+            // }
 
             // creating/adding the new group
             groups[secret_key] = group_info({
@@ -290,31 +285,31 @@ contract Storage {
         string memory to_device_name,
         string memory message_id,
         string memory data_message
-    )public returns (bool){
+    )public view returns (uint256){
         
         // check if group exists and both devices are authentic members
         if(
-            groupExists(secret_key) &&
-            followerExists(secret_key, from_device_name)>0 &&
-            followerExists(secret_key, to_device_name)>0 &&
-            !messageExist(message_id)
+            groupExists(secret_key) 
+            && followerExists(secret_key, to_device_name)>0
+            && followerExists(secret_key, from_device_name)>0
+            && !messageExist(message_id)
         ){
-            // create a new message
-            message_info memory new_message;
-            new_message.exist = true;
-            new_message.from_device_name = from_device_name;
-            new_message.to_device_name = to_device_name;
-            new_message.message = data_message;
+            // // create a new message
+            // message_info memory new_message;
+            // new_message.exist = true;
+            // new_message.from_device_name = from_device_name;
+            // new_message.to_device_name = to_device_name;
+            // new_message.message = data_message;
 
-            // add message and collect token fee
-            messages[message_id] = new_message;
-            groups[secret_key].tokens -= 1;
-            // emit event here
-            emit MessageTransaction(message_id, from_device_name, to_device_name);
+            // // add message and collect token fee
+            // messages[message_id] = new_message;
+            // groups[secret_key].tokens -= 1;
+            // // emit event here
+            // emit MessageTransaction(message_id, from_device_name, to_device_name);
 
-            return true;
+            return followerExists(secret_key, from_device_name);
         }
-        return false;
+        return 0;
     }
 
     // FUNCTION TO RETRIEVE ADDED MESSAGE DATA
