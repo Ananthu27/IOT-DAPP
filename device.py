@@ -84,8 +84,12 @@ class Device:
             group_table['LAST_PING'] = [datetime.now()]
             # group_table = group_table.set_index('DEVICE_NAME')
 
-            group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
+            # storing group table
+            with open(config['data_path']+'DeviceSpecific/Device_data/group_table','wb') as f:
+                pickle.dump(group_table,file=f)
 
+            # saving group table as json (for frontend only)
+            group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
             with open(config['data_path']+'DeviceSpecific/Device_data/group_table.json','r') as f:
                 group_table = json.load(f)
             with open (config['data_path']+'DeviceSpecific/Device_data/group_table.json','w') as f:
@@ -95,8 +99,9 @@ class Device:
     @logExceptionsWrapper
     def retrieveGroupTable(self):
         group_table = None
-        if 'group_table.json' in listdir(config['data_path']+'DeviceSpecific/Device_data/'):
-            group_table = pd.read_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
+        if isfile(config['data_path']+'DeviceSpecific/Device_data/group_table'):
+            with open(config['data_path']+'DeviceSpecific/Device_data/group_table','rb') as f:
+                group_table = pickle.load(f)
         return group_table
 
     ########## FUNCTION TO UPDATE GROUP TABLE ON PING
@@ -110,9 +115,15 @@ class Device:
                     device = group_table.loc[device_name]
                     device['LAST_PING'] = datetime.now()
                     result = True
+                
                 except KeyError:
                     result = False
+                
                 finally:
+                    # storing group table
+                    with open(config['data_path']+'DeviceSpecific/Device_data/group_table','wb') as f:
+                        pickle.dump(group_table,file=f)
+                    # saving group table as json (for frontend only)
                     group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
                     with open(config['data_path']+'DeviceSpecific/Device_data/group_table.json','r') as f:
                         group_table = json.load(f)
@@ -253,12 +264,11 @@ class Device:
             group_table_df.set_index('DEVICE_NAME',inplace=True)
 
             try :
-                print ('here')
                 to_device = group_table_df.loc[msg['to_device_name']]
 
                 message_id = str(random())
                 to_public_key = to_device['PUB_KEY']
-                print (to_public_key)
+                print (type(to_public_key))
                 discard, to_public_key = loadKeyPairRSA(to_public_key,self.master_key)
                 print ('here')
                 en_msg_data = encryptRSA(to_public_key,msg['data_message'])
