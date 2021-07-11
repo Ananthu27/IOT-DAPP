@@ -23,13 +23,14 @@ config = None
 with open('config.json') as f:
     config = json.load(f)
 
-######### LOADING DEVICE CONFIG HERE
-device_config = None
-if isfile(config['data_path']+'DeviceSpecific/Device_data/device_config.json'):
-    with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','r') as f:
-        device_config = json.load(f)
-
 def follower(device_object,port,logger):
+
+    ######### LOADING DEVICE CONFIG HERE
+    device_config = None
+    if isfile(config['data_path']+'DeviceSpecific/Device_data/device_config.json'):
+        with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','r') as f:
+            device_config = json.load(f)
+
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         try:
             s.settimeout(30)
