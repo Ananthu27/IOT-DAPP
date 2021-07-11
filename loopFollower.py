@@ -80,7 +80,7 @@ def follower(device_object,port,logger):
                         logger.info('\nDEVICE ASSOSICATION INCOMPLETE')
                         sleep(5)
                         s.close()
-                        follower(device_object,port,logger,device_config['master_port'])
+                        follower(device_object,port,logger)
                     
             ######## PING MASTER HERE
 
