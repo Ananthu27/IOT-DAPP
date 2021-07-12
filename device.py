@@ -82,13 +82,13 @@ class Device:
             group_table['TIMESTAMP'] = [datetime.now()]
             group_table['MPRECIDENCE'] = [0]
             group_table['LAST_PING'] = [datetime.now()]
-            # group_table = group_table.set_index('DEVICE_NAME')
 
             # storing group table
             with open(config['data_path']+'DeviceSpecific/Device_data/group_table','wb') as f:
                 pickle.dump(group_table,file=f)
 
             # saving group table as json (for frontend only)
+            group_table.set_index('DEVICE_NAME',inplace=True)
             group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
             with open(config['data_path']+'DeviceSpecific/Device_data/group_table.json','r') as f:
                 group_table = json.load(f)
@@ -124,6 +124,7 @@ class Device:
                     with open(config['data_path']+'DeviceSpecific/Device_data/group_table','wb') as f:
                         pickle.dump(group_table,file=f)
                     # saving group table as json (for frontend only)
+                    group_table.set_index('DEVICE_NAME',inplace=True)
                     group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
                     with open(config['data_path']+'DeviceSpecific/Device_data/group_table.json','r') as f:
                         group_table = json.load(f)
@@ -163,6 +164,7 @@ class Device:
                     with open(config['data_path']+'DeviceSpecific/Device_data/group_table','wb') as f:
                         pickle.dump(group_table,file=f)
                     # saving group table as json (for frontend only)
+                    group_table.set_index('DEVICE_NAME',inplace=True)
                     group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
                     with open(config['data_path']+'DeviceSpecific/Device_data/group_table.json','r') as f:
                         group_table = json.load(f)
