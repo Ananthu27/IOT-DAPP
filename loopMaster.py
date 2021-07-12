@@ -112,7 +112,7 @@ def master(device_object,port,logger):
                     except KeyError:
                         # add to group table here
                         device_object.addDeviceToGroupTable(
-                            '%s::%s'%(private_ip,public_ip),
+                            '%s/%s'%(private_ip,public_ip),
                             address[1],
                             association_msg['device_name'],
                             association_msg['public_key_serialized'],
