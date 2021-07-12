@@ -36,8 +36,6 @@ contract Storage {
         string message;
     }
 
-    string public txt;
-
     event GroupCreation(
         string master_name
     );
