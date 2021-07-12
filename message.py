@@ -199,6 +199,7 @@ class Message:
                 'to_device_name' : to_device_name,
                 'subject' : subject,
                 'tx_receipt' : tx_receipt,
+                'message_id' : message_id,
             }
             msg = pickle.dumps(msg)
             if len(msg) >= (2**16-8):
