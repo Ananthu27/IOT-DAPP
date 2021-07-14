@@ -134,7 +134,20 @@ def master(device_object,port,logger):
                 
             ########### INCOMING ALIVE PING MESSAGE
             elif message_no == '3':
-                pass
+                nonce = decryptRSA(device_object.private_key,msg['nonce'])
+                group_table_df = device_object.retrieveGroupTable()
+                device = (group_table_df.loc[group_table_df['DEVICE_NAME']==msg['device_name']]).iloc[0]
+                ping_res_msg = message_object.getPingResponseMessage(
+                    device_object,
+                    nonce,
+                    device['PUB_KEY']
+                )
+                s.sendto(ping_res_msg,(public_ip,device['PORT']))
+                logger.info('\nPING MESSAGE FROM %s\nLAST PING TIME OF %s UPDATED\nPING RESPONSE SENT TO %s'%(
+                    msg['device_name'],
+                    msg['device_name'],
+                    msg['device_name']
+                ))
 
             ########### DATA_MSG TRANACTION PING MESSAGE HANDLED HERE, MESSAGE NUMBER = 5
             elif message_no == '5':

@@ -1,4 +1,6 @@
 ######## GENERAL IMPORTS
+from datetime import datetime
+from loopMaster import master
 import socket 
 import traceback
 import json
@@ -17,6 +19,7 @@ from random import choice
 message_object = Message()
 host = ''
 private_ip, public_ip = getPublicPirvateIp()
+ping_attempt = 0
 
 ########## LOADING CONFIGURATION HERE
 config = None
@@ -30,6 +33,7 @@ def follower(device_object,port,logger):
     if isfile(config['data_path']+'DeviceSpecific/Device_data/device_config.json'):
         with open(config['data_path']+'DeviceSpecific/Device_data/device_config.json','r') as f:
             device_config = json.load(f)
+    global ping_attempt
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         try:
@@ -85,6 +89,20 @@ def follower(device_object,port,logger):
                         follower(device_object,port,logger)
                     
             ######## PING MASTER HERE
+            group_table_df = device_object.retrieveGroupTable()
+            master_device = (group_table_df.loc[group_table_df['MPRECIDENCE']==0]).iloc[0]
+            last_master_ping = (datetime.now()-(datetime.strptime(master_device['LAST_PING'],'%Y-%m-%d %H:%M:%S')))
+            last_master_ping = last_master_ping.total_seconds()
+
+            if last_master_ping > 30:
+                ping_msg = message_object.getPingMessage(
+                    device_object,
+                    master_device['PORT'],
+                    master_device['PUB_KEY']
+                )
+                s.sendto(ping_msg,(public_ip,int(master_device['PORT'])))
+                ping_attempt += 1
+                logger.info('\nPING MESSAGE SENT TO MASTER\nATTEMPT :%d'%(ping_attempt))
 
             ######## CHECKING OUPBOX HERE
             temp = listdir(config['data_path']+'DeviceSpecific/Outbox')
@@ -148,7 +166,17 @@ def follower(device_object,port,logger):
             
             ######## ALIVE PING RESPONSE HANDLED HERE
             if message_no=='4':
-                pass
+                # verify nonce
+                if device_object.last_nonce[str(device_config['master_port'])] == \
+                    decryptRSA(device_object.private_key,msg['nonce']) :
+                    # update grouptable 
+                    group_table_df = device_object.retrieveGroupTable()
+                    master_device = (group_table_df.loc[group_table_df['MPRECIDENCE']==0]).iloc[0]
+                    device_object.updateLastPing(
+                        master_device['DEVICE_NAME']
+                    )
+                    ping_attempt = 0
+                    logger.info('\nPING RESPONSE FROM MASTER\nMASTER LAST PING UPDATED')
 
             ######## DATA_MSG TRANACTION PING MESSAGE HANDLED HERE, MESSAGE NUMBER = 5
             elif message_no == '5':

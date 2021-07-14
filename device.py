@@ -79,9 +79,9 @@ class Device:
             group_table['PORT'] = [self.port]
             group_table['DEVICE_NAME'] = [self.device_name]
             group_table['PUB_KEY'] = [public_key_serialized]
-            group_table['TIMESTAMP'] = [datetime.now()]
+            group_table['TIMESTAMP'] = [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
             group_table['MPRECIDENCE'] = [0]
-            group_table['LAST_PING'] = [datetime.now()]
+            group_table['LAST_PING'] = [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
 
             # storing group table
             with open(config['data_path']+'DeviceSpecific/Device_data/group_table','wb') as f:
@@ -113,7 +113,7 @@ class Device:
             if group_table is not None:
                 try:
                     device = group_table.loc[device_name]
-                    device['LAST_PING'] = datetime.now()
+                    device['LAST_PING'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     result = True
                 
                 except KeyError:
@@ -142,7 +142,7 @@ class Device:
             if group_table is not None:
                 try:
                     device = group_table.loc[device_name]
-                    device['LAST_PING'] = datetime.now()
+                    device['LAST_PING'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     result = False
                 except KeyError:
                     new_device = {
@@ -150,8 +150,8 @@ class Device:
                         'IP':ip,
                         'PORT':port,
                         'PUB_KEY': pub_key,
-                        'TIMESTAMP':datetime.now(),
-                        'LAST_PING':datetime.now()
+                        'TIMESTAMP':datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        'LAST_PING':datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     }
                     if future_master:
                         new_device['MPRECIDENCE'] = group_table['MPRECIDENCE'].max() + 1
