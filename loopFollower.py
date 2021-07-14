@@ -133,6 +133,7 @@ def follower(device_object,port,logger):
                         subject='Data Message Transaction with message_id = %s Completed!'%(msg_info['message_id'])
                     )
                     s.sendto(audit_msg,(public_ip,device_config['master_port']))
+                    logger.info('\n AUDIT TRAIL MESSAGE SENT TO SERVER.')
 
                     rename(messageName,messageName.replace('.pending.ping','.completed'))
 

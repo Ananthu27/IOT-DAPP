@@ -144,12 +144,12 @@ def master(device_object,port,logger):
             ########### AUDIT TRAIL LOG MESSAGE
             elif message_no == '6':
                 if device_object.verifyMessageTransaction(msg['tx_receipt']):
-                    logger.info(msg['subject']+'From %s to %s'%(
+                    logger.info('\n'+msg['subject']+' From %s to %s'%(
                         msg['from_device_name'],
                         msg['to_device_name']
                     ))
                     with open(config['data_path']+'DeviceSpecific/Transaction_receipt/MessageTransactionReceipt.%s'%(msg['message_id']),'wb') as f:
-                        pickle.dump(msg['tx_receipt'])
+                        pickle.dump(msg['tx_receipt'],f)
             
             ######## UNIDENTIFIED MESSAGE NO
             else :
