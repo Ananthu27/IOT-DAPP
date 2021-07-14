@@ -136,11 +136,14 @@ def master(device_object,port,logger):
             elif message_no == '3':
                 nonce = decryptRSA(device_object.private_key,msg['nonce'])
                 group_table_df = device_object.retrieveGroupTable()
-                device = (group_table_df.loc[group_table_df['DEVICE_NAME']==msg['device_name']]).iloc[0]
+                group_table_df.set_index('DEVICE_NAME',inplace=True)
+                device = group_table_df.loc[msg['device_name']]
+                discard, to_public_key = loadKeyPairRSA(device['PUB_KEY'],device_object.master_key)
+
                 ping_res_msg = message_object.getPingResponseMessage(
                     device_object,
                     nonce,
-                    device['PUB_KEY']
+                    to_public_key
                 )
                 s.sendto(ping_res_msg,(public_ip,device['PORT']))
                 logger.info('\nPING MESSAGE FROM %s\nLAST PING TIME OF %s UPDATED\nPING RESPONSE SENT TO %s'%(
