@@ -120,6 +120,9 @@ def follower(device_object,port,logger):
                         msg_info['message_id']
                     )
                     s.sendto(msg,(public_ip,int(msg_info['port'])))
+
+                    if (int(msg_info['port'])==device_config['master_port']):
+                        sleep(5)
                     
                     # send audit trail to master 
                     audit_msg = message_object.getAuditMssg(

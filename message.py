@@ -184,18 +184,18 @@ class Message:
     @logExceptionsWrapper
     def getAuditMssg(
         self,
+        device_object,
         message_id,
-        from_device_name = 'unspecified',
         to_device_name = 'unspecified',
         subject = 'unspecified',
         ):
-        if not self.master:
+        if not device_object.master:
             tx_receipt = None
             with open(config['data_path']+'DeviceSpecific/Transaction_receipt/MessageTransactionReceipt.%s'%(message_id),'rb') as f:
                 tx_receipt = pickle.load(f)
             msg = {
                 'message_no' : '6',
-                'from_device_name' : from_device_name,
+                'from_device_name' : device_object.device_name,
                 'to_device_name' : to_device_name,
                 'subject' : subject,
                 'tx_receipt' : tx_receipt,

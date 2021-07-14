@@ -102,7 +102,7 @@ def master(device_object,port,logger):
                 if device_object.verifyDeviceAssociation(association_msg['association_tx_receipt']):
                     logger.info('\nVERIFIED DEVICE ASSOCIATION FOR (%s,%d)'%(address[0],address[1]))
                     with open(config['data_path']+'DeviceSpecific/Transaction_receipt/DeviceAssociationReceipt.%s'%(association_msg['device_name']),'wb') as f:
-                        pickle.dump(association_msg['association_tx_receipt'])
+                        pickle.dump(association_msg['association_tx_receipt'],f)
                     group_table_df = device_object.retrieveGroupTable()
                     group_table_df.set_index('DEVICE_NAME',inplace=True)
 
