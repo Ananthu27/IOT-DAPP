@@ -91,7 +91,7 @@ class Message:
     ######### FUNCTION TO CREATE PING/ALIVE MESSAGE
     @logExceptionsWrapper
     def getPingMessage(self,device_object,to_port,to_public_key):
-        if not self.master :
+        if not device_object.master :
             nonce = getTrueRandom()
             device_object.last_nonce[str(to_port)] = nonce
             tx_receipt = None
