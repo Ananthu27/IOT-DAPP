@@ -108,28 +108,27 @@ class Device:
     @logExceptionsWrapper
     def updateLastPing(self,device_name):
         result = False
-        if self.master:
-            group_table = self.retrieveGroupTable()
-            if group_table is not None:
-                try:
-                    device = group_table.loc[device_name]
-                    device['LAST_PING'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    result = True
-                
-                except KeyError:
-                    result = False
-                
-                finally:
-                    # storing group table
-                    with open(config['data_path']+'DeviceSpecific/Device_data/group_table','wb') as f:
-                        pickle.dump(group_table,file=f)
-                    # saving group table as json (for frontend only)
-                    group_table.set_index('DEVICE_NAME',inplace=True)
-                    group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
-                    with open(config['data_path']+'DeviceSpecific/Device_data/group_table.json','r') as f:
-                        group_table = json.load(f)
-                    with open (config['data_path']+'DeviceSpecific/Device_data/group_table.json','w') as f:
-                        json.dump(group_table,fp=f,indent=5)
+        group_table = self.retrieveGroupTable()
+        if group_table is not None:
+            try:
+                device = group_table.loc[device_name]
+                group_table.at[device_name,'LAST_PING'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                result = True
+            
+            except KeyError:
+                result = False
+            
+            finally:
+                # storing group table
+                with open(config['data_path']+'DeviceSpecific/Device_data/group_table','wb') as f:
+                    pickle.dump(group_table,file=f)
+                # saving group table as json (for frontend only)
+                group_table.set_index('DEVICE_NAME',inplace=True)
+                group_table.to_json(config['data_path']+'DeviceSpecific/Device_data/group_table.json')
+                with open(config['data_path']+'DeviceSpecific/Device_data/group_table.json','r') as f:
+                    group_table = json.load(f)
+                with open (config['data_path']+'DeviceSpecific/Device_data/group_table.json','w') as f:
+                    json.dump(group_table,fp=f,indent=5)
         return result
 
     ########## FUNCITON TO ADD DEVICE TO GROUP TABLE

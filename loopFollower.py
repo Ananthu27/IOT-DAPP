@@ -95,8 +95,8 @@ def follower(device_object,port,logger):
             last_master_ping = (datetime.now()-(datetime.strptime(master_device['LAST_PING'],'%Y-%m-%d %H:%M:%S')))
             last_master_ping = last_master_ping.total_seconds()
             discard, to_public_key = loadKeyPairRSA(master_device['PUB_KEY'],device_object.master_key)
-
-            if last_master_ping > 30:
+            
+            if last_master_ping > 300:
                 ping_msg = message_object.getPingMessage(
                     device_object,
                     master_device['PORT'],
@@ -105,6 +105,7 @@ def follower(device_object,port,logger):
                 s.sendto(ping_msg,(public_ip,int(master_device['PORT'])))
                 ping_attempt += 1
                 logger.info('\nPING MESSAGE SENT TO MASTER\nATTEMPT :%d'%(ping_attempt))
+                sleep(10)
 
             ######## CHECKING OUPBOX HERE
             temp = listdir(config['data_path']+'DeviceSpecific/Outbox')
@@ -175,7 +176,7 @@ def follower(device_object,port,logger):
                     group_table_df = device_object.retrieveGroupTable()
                     master_device = (group_table_df.loc[group_table_df['MPRECIDENCE']==0]).iloc[0]
                     device_object.updateLastPing(
-                        master_device['DEVICE_NAME']
+                        master_device.name
                     )
                     ping_attempt = 0
                     logger.info('\nPING RESPONSE FROM MASTER\nMASTER LAST PING UPDATED')
