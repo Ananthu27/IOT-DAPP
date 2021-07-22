@@ -1,0 +1,117 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+.site-card-wrapper {
+  padding: 10px;
+  /* background: #ececec; */
+}
+
+
+  * {
+    box-sizing: border-box;
+  }
+  
+  .App {
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+    margin-bottom: 5px;
+
+  }
+  
+  .App > h1 {
+    font-size: 1.8rem;
+  }
+  
+  
+  .groups {
+    display: flex;
+    flex-wrap: wrap;
+    text-align: left;
+    position: relative;
+    border-radius: 5px;
+    padding: 40px;
+    margin: 100px;
+    width: 81%;
+    color: #333;
+    flex-basis: width;
+
+    background-color: rgb(209, 243, 243);
+
+  }
+  .groups h3 {
+    font-size: 1rem;
+    opacity: 1.0;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    text-align: left;
+
+    
+  }
+  
+  .group {
+    position: relative;
+    border-radius: 5px;
+    padding: 30px;
+    margin: 5px;
+    width: 100%;
+    color: #333;
+    flex-basis: width;
+    text-align: center;
+    /* background-color: rgb(165, 230, 230); */
+
+  }
+  
+  
+  .group h3 {
+    font-size: 1rem;
+    opacity: 1.0;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    text-align: left;
+
+    
+  }
+  
+  .group h2 {
+    margin-top: 5px;
+    margin-bottom: 30px;
+    font-size: 1rem;
+  }
+  
+  .details {
+    text-align: center;
+  }
+  .gro {
+    /* display: flex; */
+    text-align: left;
+    position: relative;
+    border-radius: 5px;
+    padding: 40px;
+    margin: 100px;
+    width: 85%;
+    background-color: rgb(129, 146, 146);
+    flex-basis: width;
+  }
+  .index{
+    text-align: center;
+   
+
+  }
+  .home{
+    font-size: 1.5rem;
+    list-style-type: none;
+    margin: 10px;
+    padding: 8px;
+    overflow: hidden;
+  }
+ 

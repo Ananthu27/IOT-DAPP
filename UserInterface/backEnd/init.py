@@ -59,15 +59,37 @@ def info():
 
 # http://127.0.0.1:5000/flask/GroupTable
 ########## PATH TO RETURN GROUP TABLE
+# @server.route('/flask/GroupTable',methods=['GET'])
+# @cross_origin(supports_credentials=True)
+# def getGroupTable():
+#     response = json.dumps({})
+#     if isfile(server.config['DeviceDataPath']+'group_table.json'):
+#         with open(server.config['DeviceDataPath']+'group_table.json','r') as f:
+#             response = json.load(f)
+#     # response =[response]
+#     response = json.dumps(response)
+#     return response
+
 @server.route('/flask/GroupTable',methods=['GET'])
 @cross_origin(supports_credentials=True)
 def getGroupTable():
-    response = json.dumps({})
-    if isfile(server.config['DeviceDataPath']+'group_table.json'):
-        with open(server.config['DeviceDataPath']+'group_table.json','r') as f:
-            response = json.load(f)
-    return response
+    response = json.dumps([])
 
+    if isfile(server.config['DeviceDataPath']+'group_table'):
+        with open(server.config['DeviceDataPath']+'group_table','rb') as f:
+            df = pickle.load(f)
+
+            indexs = df.index
+            columns = df.columns
+            response = []
+
+            for index in indexs:
+                item = {}
+                for column in columns:
+                    item[column] = str(df.loc[index][column])
+                response.append(item)
+
+    return json.dumps(response)
 # http://127.0.0.1:5000/flask/TransactionNames
 ########## PATH TO RETURN LIST OF ALL TRANSACTION RECEIPT NAMES
 @server.route('/flask/TransactionNames',methods=['GET'])
@@ -93,6 +115,7 @@ def getTransaciton(filename):
             response['logs'] = [delTypeInDict(item,del_type) for item in response['logs']]
             for i,log in enumerate(response['logs']):
                 response['logs'][i]['topics'] = delTypeInList(response['logs'][i]['topics'],del_type)
+            response=[response]
             response = json.dumps(response,indent=4)
     return (response)
 
@@ -152,10 +175,14 @@ def getDevice(device_name):
             'exists' : device[0],
             'device_name' : device[1],
             'public_key' : device[2],
-            'public_ip:private_ip:host:port' : device[3],
+            'public_ip':device[3],
+            # 'private_ip':device[4],
+            # 'host':device[5],
+            # 'port' : device[6],
             'master' : device[4],
             'future_master' : device[5],
         }
+        response =[response]
         response = json.dumps(response)
     except Exception as e: 
         print (e)
